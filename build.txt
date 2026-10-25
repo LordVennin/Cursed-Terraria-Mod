@@ -1,0 +1,3 @@
+displayName = Bag of Chaos
+author = ClaudeCode
+version = 0.1
