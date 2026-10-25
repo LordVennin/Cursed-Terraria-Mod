@@ -1,5 +1,4 @@
 using BagofChaos.Common.Players;
-using BagofChaos.Content.Projectiles;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
@@ -9,7 +8,7 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Items.Tools
 {
-	// Dirt Rod, but for whole chunks. Click-drag to select, left click to place precisely, right click to throw the chunk.
+	// Dirt Rod, but for whole chunks. Click-drag to select, left click to place precisely, right click to put it back where it came from.
 	public class BlockRod : ModItem
 	{
 		public const int MaxSelection = 24; // tiles per side
@@ -65,6 +64,7 @@ namespace BagofChaos.Content.Items.Tools
 						modPlayer.Selecting = false;
 						Rectangle sel = SelectionRect(modPlayer.SelectionStart, modPlayer.SelectionEnd);
 						BlockRodClipboard clip = BlockRodClipboard.Cut(new Point(sel.X, sel.Y), sel.Width, sel.Height);
+						clip.Origin = new Point(sel.X, sel.Y);
 						if (HasAnyBlocks(clip)) {
 							modPlayer.Clipboard = clip;
 							SoundEngine.PlaySound(SoundID.Dig, Main.MouseWorld);
@@ -90,17 +90,16 @@ namespace BagofChaos.Content.Items.Tools
 				}
 			}
 			else if (PlayerInput.Triggers.JustPressed.MouseRight) {
-				// Throw mode: the chunk becomes a projectile with momentum and gravity.
-				Vector2 dir = Main.MouseWorld - player.Center;
-				if (dir != Vector2.Zero)
-					dir.Normalize();
-				Vector2 velocity = dir * 13f + new Vector2(0f, -4f);
-				Vector2 spawn = player.Center - new Vector2(held.Width * 8f, held.Height * 16f + 8f);
-				int index = Projectile.NewProjectile(player.GetSource_ItemUse(Item), spawn, velocity, ModContent.ProjectileType<ThrownChunk>(), 30 + held.Width * held.Height, 8f, player.whoAmI);
-				if (index >= 0 && index < Main.maxProjectiles)
-					ThrownChunk.Attach(Main.projectile[index].identity, held);
-				modPlayer.Clipboard = null;
-				SoundEngine.PlaySound(SoundID.Item1, player.Center);
+				// Cancel: put the chunk back where it came from (or as close as it fits).
+				Point origin = held.Origin;
+				int guard = 0;
+				while (!held.CanPlace(origin) && guard++ < 32)
+					origin.Y--;
+				if (guard < 32) {
+					held.Paste(origin);
+					modPlayer.Clipboard = null;
+					SoundEngine.PlaySound(SoundID.Dig, Main.MouseWorld);
+				}
 			}
 		}
 

@@ -159,6 +159,12 @@ def gen_items():
     s.save(I + "Ammo/YoureLongAmmo.png")
 
     s = Sprite(10, 18)
+    s.rect(2, 0, 7, 17, GOLD)
+    s.rect(2, 12, 7, 17, DARKGREY)
+    s.line(4, 2, 4, 10, BLUE, 1); s.line(5, 2, 5, 10, BLUE, 1)
+    s.save(I + "Ammo/YoureTallAmmo.png")
+
+    s = Sprite(10, 18)
     s.rect(2, 0, 7, 17, PINK)
     s.rect(2, 12, 7, 17, DARKGREY)
     s.ellipse(3, 3, 6, 6, RED, outline=None)
@@ -201,6 +207,12 @@ def gen_items():
     s.rect(14, 14, 16, 16, WHITE, outline=None)
     s.line(14, 1, 14, 28, DARKGREY)
     s.save(I + "Weapons/PongPower.png")
+    s = Sprite(30, 30)                                        # Green Pong Power
+    s.rect(0, 0, 29, 29, BLACK)
+    s.rect(2, 8, 4, 20, LIME, outline=None); s.rect(25, 10, 27, 22, LIME, outline=None)
+    s.rect(8, 2, 20, 4, LIME, outline=None); s.rect(10, 25, 22, 27, LIME, outline=None)
+    s.rect(14, 14, 16, 16, LIME, outline=None)
+    s.save(I + "Weapons/GreenPongPower.png")
 
     s = Sprite(28, 28)                                        # Text Boxing Gloves
     s.ellipse(2, 6, 20, 24, RED)
@@ -310,10 +322,6 @@ def gen_items():
         s.poly([(10, 2), (18, 2), (14, 12)], SILVER)
         s.save(I + "Accessories/" + name + ".png")
 
-    s = bottle(ORANGE); s.line(5, 20, 14, 12, WHITE, 2); s.save(I + "Accessories/BottleOfZig.png")
-    s = bottle(PURPLE); s.line(5, 12, 14, 20, WHITE, 2); s.save(I + "Accessories/BottleOfZag.png")
-    s = bottle(PINK); s.line(4, 20, 9, 12, WHITE, 2); s.line(9, 12, 15, 20, WHITE, 2); s.save(I + "Accessories/BottleOfZigzag.png")
-
     # ---- Armor ----
     s = Sprite(22, 20)
     s.ellipse(1, 0, 20, 19, TAN)
@@ -345,11 +353,11 @@ def gen_items():
     s.rect(0, 0, 27, 15, YELLOW)
     s.rect(2, 2, 9, 13, RED, outline=None); s.rect(18, 2, 25, 13, BLUE, outline=None)
     s.save(I + "Consumables/ThreeDMovieTicket.png")
-    s = Sprite(22, 24)                                        # Dehydrated Mystery Powder: paper pouch
-    s.rect(2, 4, 19, 22, TAN)
-    s.rect(2, 4, 19, 8, LIGHTGREY)
-    s.text_ish(5, 14, 4, DARKBROWN)
-    s.save(I + "Consumables/DehydratedMysteryPowder.png")
+    s = Sprite(18, 30)                                        # Weedy Beer: a brown bottle with a leaf
+    s.rect(6, 0, 11, 8, BROWN); s.rect(2, 8, 15, 29, DARKBROWN)
+    s.ellipse(5, 14, 12, 22, GREEN)
+    s.save(I + "Consumables/WeedyBeer.png")
+
     s = Sprite(20, 22)                                        # Delirium Pills
     s.rect(3, 2, 16, 21, ORANGE); s.rect(3, 2, 16, 6, WHITE)
     s.save(I + "Consumables/DeliriumPills.png")
@@ -369,10 +377,6 @@ def gen_items():
     s.rect(4, 10, 27, 21, DARKGREY)
     s.ellipse(8, 0, 23, 10, PURPLE)
     s.save(I + "Placeable/AlchemicalDehydrator.png")
-    s = Sprite(20, 30)                                        # Null Gravity Beacon
-    s.rect(4, 8, 15, 29, DARKGREY)
-    s.ellipse(2, 0, 17, 14, CYAN)
-    s.save(I + "Placeable/NullGravityBeacon.png")
     for name, col in [("RainInABottle", BLUE), ("StormInABottle", DARKBLUE), ("BlizzardInABottle", WHITE),
                       ("SunshineInABottle", YELLOW), ("SandstormInABottle", TAN), ("JellyStormInABottle", PINK),
                       ("FrogRainInABottle", GREEN)]:
@@ -424,6 +428,7 @@ def gen_projectiles():
 
     s = Sprite(12, 12); s.ellipse(0, 0, 11, 11, WHITE); s.ellipse(4, 3, 8, 7, BLACK, outline=None); s.save(P + "GooglyBullet.png")
     s = Sprite(8, 16); s.rect(2, 0, 5, 15, GOLD); s.save(P + "YoureLongBullet.png")
+    s = Sprite(8, 16); s.rect(2, 0, 5, 15, GOLD); s.line(3, 2, 3, 12, BLUE); s.save(P + "YoureTallBullet.png")
     s = Sprite(8, 16); s.rect(2, 0, 5, 15, PINK); s.save(P + "BuddyBullet.png")
     s = Sprite(16, 16); s.ellipse(0, 0, 15, 15, (255, 0, 255, 200)); s.save(P + "ChaosSolutionSpray.png")
     s = Sprite(14, 14); s.ellipse(0, 0, 13, 13, (250, 250, 230, 220)); s.save(P + "GlueGlob.png")
@@ -433,7 +438,9 @@ def gen_projectiles():
     s.ellipse(15, 15, 44, 44, (255, 240, 200, 220), outline=None)
     s.save(P + "CanExplosion.png")
 
-    s = Sprite(12, 60); s.rect(0, 0, 11, 59, WHITE); s.save(P + "PongPaddle.png")
+    s = Sprite(12, 180); s.rect(0, 0, 11, 179, WHITE); s.save(P + "PongPaddle.png")
+    s = Sprite(12, 220); s.rect(0, 0, 11, 219, LIME); s.save(P + "GreenPongPaddle.png")
+    s = Sprite(16, 16); s.rect(0, 0, 15, 15, LIME); s.save(P + "GreenPongBall.png")
     s = Sprite(16, 16); s.rect(0, 0, 15, 15, WHITE); s.save(P + "PongBall.png")
 
     rat = Sprite(22, 12)
@@ -446,7 +453,6 @@ def gen_projectiles():
 
     s = Sprite(18, 18); s.poly([(9, 0), (17, 9), (9, 17), (1, 9)], SILVER); s.save(P + "GparrlingHookProjectile.png")
     s = Sprite(10, 10); s.ellipse(0, 0, 9, 9, LIGHTBLUE); s.save(P + "ToolGunBolt.png")
-    s = Sprite(16, 16); s.rect(0, 0, 15, 15, BROWN); s.save(P + "ThrownChunk.png")
 
     s = Sprite(90, 90)                                        # Rocket pack explosion
     s.ellipse(0, 0, 89, 89, (255, 120, 40, 170), outline=RED)
@@ -465,9 +471,35 @@ def gen_projectiles():
         s.line(24 + i * 3, 6 + i, 24 + i * 3, 18 - i, DARKGREY)
     s.save(P + "DrillerPackDrill.png")
 
-    s = Sprite(16, 16)                                        # moving chunk placeholder (drawn procedurally anyway)
-    s.rect(0, 0, 15, 15, (0, 0, 0, 0), outline=None)
-    s.save(P + "BlockRodSelection.png")
+
+
+def chibi(path, hair, cloth, frames=4, ears=False, glow=None):
+    """Floating chibi placeholder: big head, tiny body. frames stacked vertically, 32x36 each."""
+    w, h = 32, 36
+    s = Sprite(w, h * frames)
+    for f in range(frames):
+        y = f * h + (f % 2)
+        s.rect(11, y + 20, 20, y + 32, cloth)                    # body
+        s.rect(9, y + 32, 13, y + 35, cloth); s.rect(18, y + 32, 22, y + 35, cloth)
+        s.ellipse(5, y + 2, 26, y + 22, SKIN)                     # head
+        s.ellipse(5, y + 0, 26, y + 12, hair)                     # hair
+        s.rect(4, y + 8, 8, y + 18, hair); s.rect(23, y + 8, 27, y + 18, hair)
+        if ears:
+            s.poly([(6, y + 4), (9, y - 2 + 4), (12, y + 4)], hair); s.poly([(19, y + 4), (22, y - 2 + 4), (25, y + 4)], hair)
+        s.px(12, y + 14, BLACK); s.px(19, y + 14, BLACK)
+        s.px(12, y + 13, CYAN if glow is None else glow); s.px(19, y + 13, CYAN if glow is None else glow)
+    s.save(path)
+
+
+def gen_pets():
+    chibi("Content/Pets/Monst3rProjectile.png", (230, 230, 240, 255), BLACK, glow=(220, 60, 60, 255))
+    chibi("Content/Pets/KaltsitProjectile.png", (235, 235, 230, 255), WHITE, ears=True, glow=(90, 200, 140, 255))
+    s = Sprite(20, 24)                                        # Monst3r item: a red-eyed data chip
+    s.rect(2, 2, 17, 21, BLACK); s.ellipse(6, 8, 13, 15, RED)
+    s.save("Content/Pets/Monst3rItem.png")
+    s = Sprite(20, 24)                                        # Kal'tsit item: a glowing green medical crystal
+    s.poly([(10, 1), (18, 12), (10, 23), (2, 12)], (120, 230, 160, 255))
+    s.save("Content/Pets/KaltsitItem.png")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -484,6 +516,16 @@ def gen_npcs():
         s.ellipse(2, y + f, 15, y + 5 + f, LIGHTGREY)
         s.rect(4, y + 10, 13, y + 16, RED)
     s.save(N + "TinCan.png")
+
+    # Glue Slime: 2 frames of 32x24, a translucent white blob
+    s = Sprite(32, 48)
+    for f in range(2):
+        y = f * 24
+        squash = f * 3
+        s.ellipse(1, y + 4 + squash, 30, y + 23, (250, 250, 235, 220), outline=(200, 200, 180, 255))
+        s.ellipse(9, y + 8 + squash, 13, y + 13 + squash, BLACK, outline=None); s.ellipse(19, y + 8 + squash, 23, y + 13 + squash, BLACK, outline=None)
+        s.ellipse(5, y + 7 + squash, 9, y + 10 + squash, (255, 255, 255, 160), outline=None)
+    s.save(N + "GlueSlime.png")
 
     # Slippery Frog: 4 frames of 22x16
     s = Sprite(22, 64)
@@ -559,6 +601,9 @@ def gen_buffs():
     buff("PongBuff", lambda s: (s.rect(4, 8, 7, 24, WHITE), s.rect(24, 8, 27, 24, WHITE), s.rect(14, 14, 17, 17, WHITE)))
     buff("Delirious", lambda s: (s.ellipse(6, 6, 25, 25, BLACK), s.ellipse(11, 11, 20, 20, PURPLE)))
     buff("CorporateSynergy", lambda s: (s.rect(6, 6, 25, 25, GOLD), s.text_ish(9, 12, 5, BLACK), s.text_ish(9, 18, 5, BLACK)))
+    buff("Weedy", lambda s: (s.rect(10, 6, 21, 26, DARKBROWN), s.ellipse(12, 12, 19, 20, GREEN)))
+    buff("Monst3rBuff", lambda s: (s.ellipse(8, 8, 23, 23, (230, 230, 240, 255)), s.ellipse(13, 13, 18, 18, RED)))
+    buff("KaltsitBuff", lambda s: (s.ellipse(8, 8, 23, 23, (235, 235, 230, 255)), s.ellipse(13, 13, 18, 18, (90, 200, 140, 255))))
     buff("Rocketing", lambda s: (s.poly([(6, 24), (16, 4), (26, 24)], RED), s.poly([(12, 24), (16, 30), (20, 24)], ORANGE)))
 
 
@@ -583,13 +628,6 @@ def gen_tiles():
     s.ellipse(14, 0, 39, 18, PURPLE)
     s.rect(20, 20, 33, 27, LIME)
     s.save(T + "AlchemicalDehydratorTile.png")
-
-    # Null gravity beacon: 2x3 (36x54)
-    s = Sprite(36, 54)
-    s.rect(8, 16, 27, 53, DARKGREY)
-    s.ellipse(2, 0, 33, 26, CYAN)
-    s.ellipse(10, 6, 25, 20, WHITE, outline=None)
-    s.save(T + "NullGravityBeaconTile.png")
 
     # Weather beacon: 7 styles of 2x3 (each 36x54), laid out horizontally -> 252x54
     cols = [BLUE, DARKBLUE, WHITE, YELLOW, TAN, PINK, GREEN]
@@ -616,7 +654,7 @@ def gen_misc():
     for y in range(size):
         for x in range(size):
             d = math.hypot(x - c, y - c) / c
-            a = 0 if d < 0.55 else min(255, int((d - 0.55) / 0.45 * 255))
+            a = 0 if d < 0.55 else min(255, int((d - 0.55) / 0.11 * 255))
             px[x, y] = (0, 0, 0, a)
     path = os.path.join(ROOT, M + "DarknessMask.png")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -725,6 +763,7 @@ if __name__ == "__main__":
     gen_items()
     gen_projectiles()
     gen_npcs()
+    gen_pets()
     gen_buffs()
     gen_tiles()
     gen_misc()

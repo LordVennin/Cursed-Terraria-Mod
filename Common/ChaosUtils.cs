@@ -70,7 +70,7 @@ namespace BagofChaos.Common
 						continue;
 					Vector2 dir = distance < 1f ? -Vector2.UnitY : delta / distance;
 					float falloff = 1f - distance / Radius * 0.5f;
-					npc.velocity = dir * Power * falloff + new Vector2(0f, -8f);
+					npc.velocity = dir * Power * falloff + new Vector2(0f, -30f); // more upward: into the stratosphere
 					npc.netUpdate = true;
 					if (Main.netMode != NetmodeID.MultiplayerClient && !npc.friendly) {
 						// Does 1 damage. One. That's the joke.
@@ -88,7 +88,7 @@ namespace BagofChaos.Common
 						Vector2 dir = distance < 1f ? -Vector2.UnitY : delta / distance;
 						if (player.whoAmI == sourcePlayer)
 							dir = -Vector2.UnitY; // you launched yourself. congratulations.
-						player.velocity = dir * Power * 0.6f;
+						player.velocity = dir * Power * 0.6f + new Vector2(0f, -24f);
 						player.fallStart = (int)(player.position.Y / 16f);
 						player.noFallDmg = true; // just for this frame of flight; reset by the engine next tick
 					}

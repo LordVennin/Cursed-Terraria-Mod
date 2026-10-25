@@ -19,7 +19,7 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.friendly = true;
 			Projectile.DamageType = DamageClass.Melee;
 			Projectile.penetrate = -1;
-			Projectile.timeLeft = 240;
+			Projectile.timeLeft = 120;
 			Projectile.aiStyle = -1;
 			Projectile.tileCollide = true;
 			Projectile.ignoreWater = true;
@@ -32,7 +32,7 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.rotation = (owner.Center - Projectile.Center).ToRotation() - MathHelper.PiOver2;
 
 			if (!Retracting) {
-				if (Vector2.Distance(owner.Center, Projectile.Center) > 700f)
+				if (Vector2.Distance(owner.Center, Projectile.Center) > 350f)
 					StartRetract();
 				return;
 			}
@@ -44,7 +44,7 @@ namespace BagofChaos.Content.Projectiles
 				Projectile.Kill();
 				return;
 			}
-			Projectile.velocity = toOwner / dist * 18f;
+			Projectile.velocity = toOwner / dist * 36f;
 
 			int index = HookedNPC;
 			if (index >= 0 && index < Main.maxNPCs && Main.npc[index].active) {

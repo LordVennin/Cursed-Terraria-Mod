@@ -24,15 +24,12 @@ namespace BagofChaos.Common.GlobalNPCs
 		public bool Googly;      // Googly Eye ammo
 		public bool Slashed;     // Sprite Slasher: bottom half drawn on top of the top half
 		public bool Stretched;   // "You're Long?" ammo: 4x wide
+		public bool Tall;        // "You're Tall?" ammo: 4x high
 
 		// --- glue ---
 		public int GluedToNPC = -1;
 		public Vector2 GlueOffset;
 		public int GlueBurnCooldown;
-
-		// --- null gravity bookkeeping ---
-		private bool nullGravityCaptured;
-		private bool originalNoGravity;
 
 		// --- delirium silhouette ---
 		public bool Silhouette;
@@ -42,13 +39,14 @@ namespace BagofChaos.Common.GlobalNPCs
 		private Vector2 pupilB;
 		private Vector2 lastVelocity;
 
-		public byte GetVisualFlags() => (byte)((Googly ? 1 : 0) | (Slashed ? 2 : 0) | (Stretched ? 4 : 0) | (Silhouette ? 8 : 0));
+		public byte GetVisualFlags() => (byte)((Googly ? 1 : 0) | (Slashed ? 2 : 0) | (Stretched ? 4 : 0) | (Silhouette ? 8 : 0) | (Tall ? 16 : 0));
 
 		public void ApplyVisualFlags(byte flags) {
 			Googly = (flags & 1) != 0;
 			Slashed = (flags & 2) != 0;
 			Stretched = (flags & 4) != 0;
 			Silhouette = (flags & 8) != 0;
+			Tall = (flags & 16) != 0;
 		}
 
 		public override void OnSpawn(NPC npc, IEntitySource source) {
@@ -74,26 +72,6 @@ namespace BagofChaos.Common.GlobalNPCs
 			// Night of Moon Shoes: everything is floaty.
 			if (ChaosEvents.MoonShoesActive)
 				npc.GravityMultiplier *= 0.5f;
-
-			// Null Gravity Beacon.
-			bool inField = NullGravitySystem.InField(npc.Center);
-			if (inField) {
-				if (!nullGravityCaptured) {
-					originalNoGravity = npc.noGravity;
-					nullGravityCaptured = true;
-				}
-				npc.noGravity = true;
-				if (originalNoGravity && !npc.boss && !npc.townNPC) {
-					// Flyers lose their steering and just drift on whatever momentum they had.
-					npc.velocity *= 0.995f;
-					npc.rotation += npc.velocity.X * 0.01f;
-					return false;
-				}
-			}
-			else if (nullGravityCaptured) {
-				npc.noGravity = originalNoGravity;
-				nullGravityCaptured = false;
-			}
 
 			return true;
 		}
@@ -200,7 +178,7 @@ namespace BagofChaos.Common.GlobalNPCs
 				if (delta == Vector2.Zero)
 					delta = Vector2.UnitX;
 				delta.Normalize();
-				float speed = System.Math.Max(5f, (npc.velocity.Length() + other.velocity.Length()) * 0.5f + 1f);
+				float speed = System.Math.Max(5f, (npc.velocity.Length() + other.velocity.Length()) * 0.5f + 1f) * 3f; // triple bouncy
 				npc.velocity = -delta * speed;
 				other.velocity = delta * speed;
 				npc.netUpdate = true;
@@ -262,6 +240,14 @@ namespace BagofChaos.Common.GlobalNPCs
 		public override void OnKill(NPC npc) {
 			if (ChaosEvents.InvasionActive && npc.ModNPC is CorporateZombie)
 				ChaosEvents.RegisterInvasionKill(npc);
+			if (ChaosEvents.DeliriumActive && Silhouette)
+				ChaosEvents.RegisterDeliriumKill();
+		}
+
+		// Every zombie, vanilla or otherwise, now sells 3D TVs with its teeth.
+		public override void OnHitPlayer(NPC npc, Player target, Player.HurtInfo hurtInfo) {
+			if (NPCID.Sets.Zombies[npc.type] || npc.ModNPC is CorporateZombie)
+				target.AddBuff(ModContent.BuffType<ThreeDDebuff>(), 60 * 12);
 		}
 
 		// ------------------------------------------------------------------------------------------------------------
@@ -273,7 +259,7 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override bool PreDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
-			if (!Slashed && !Stretched)
+			if (!Slashed && !Stretched && !Tall)
 				return true;
 			if (npc.ModNPC != null && npc.ModNPC.Mod != Mod)
 				return true; // other mods may draw themselves; don't fight them
@@ -286,7 +272,7 @@ namespace BagofChaos.Common.GlobalNPCs
 			SpriteEffects effects = npc.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
 			Color color = npc.GetAlpha(drawColor);
 			float scaleX = npc.scale * (Stretched ? 4f : 1f);
-			float scaleY = npc.scale;
+			float scaleY = npc.scale * (Tall ? 4f : 1f);
 			Vector2 center = npc.Center - screenPos + new Vector2(0f, Main.NPCAddHeight(npc) + npc.gfxOffY);
 
 			if (!Slashed) {
@@ -309,6 +295,8 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override void PostDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			if (Main.LocalPlayer.HasBuff<Weedy>())
+				DrawReflection(npc, spriteBatch, screenPos, drawColor);
 			if (!Googly)
 				return;
 			Texture2D eye = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/GooglyEye").Value;
@@ -324,6 +312,19 @@ namespace BagofChaos.Common.GlobalNPCs
 			Vector2 pupilOrigin = pupil.Size() * 0.5f;
 			spriteBatch.Draw(pupil, leftEye + pupilA * eyeScale, null, Color.White, 0f, pupilOrigin, eyeScale, SpriteEffects.None, 0f);
 			spriteBatch.Draw(pupil, rightEye + pupilB * eyeScale, null, Color.White, 0f, pupilOrigin, eyeScale, SpriteEffects.None, 0f);
+		}
+
+		// Weedy Beer: every NPC is reflected upside down across the line under the local player's feet.
+		private static void DrawReflection(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			Texture2D texture = TextureAssets.Npc[npc.type].Value;
+			Rectangle frame = npc.frame;
+			if (frame.Width <= 0 || frame.Height <= 0)
+				frame = texture.Frame(1, Main.npcFrameCount[npc.type], 0, 0);
+			float mirrorY = Main.LocalPlayer.Bottom.Y;
+			Vector2 center = npc.Center + new Vector2(0f, Main.NPCAddHeight(npc) + npc.gfxOffY);
+			Vector2 mirrored = new Vector2(center.X, 2f * mirrorY - center.Y) - screenPos;
+			SpriteEffects effects = SpriteEffects.FlipVertically | (npc.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
+			spriteBatch.Draw(texture, mirrored, frame, npc.GetAlpha(drawColor) * 0.45f, -npc.rotation, frame.Size() * 0.5f, npc.scale, effects, 0f);
 		}
 
 		private void UpdateGooglyEyes(NPC npc) {

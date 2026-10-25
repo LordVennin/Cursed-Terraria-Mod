@@ -52,6 +52,18 @@ namespace BagofChaos.Content.Projectiles
 		}
 	}
 
+	// "You're Tall?" - stretches the target's sprite to 4x height. Mind your head.
+	public class YoureTallBullet : SimpleBullet
+	{
+		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
+			ChaosGlobalNPC g = target.GetGlobalNPC<ChaosGlobalNPC>();
+			if (!g.Tall) {
+				g.Tall = true;
+				BagofChaos.SendNPCVisual(target);
+			}
+		}
+	}
+
 	// Buddy System: applies Life Link. Everyone linked on screen shares every hit.
 	public class BuddyBullet : SimpleBullet
 	{

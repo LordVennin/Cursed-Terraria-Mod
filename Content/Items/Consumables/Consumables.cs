@@ -34,7 +34,7 @@ namespace BagofChaos.Content.Items.Consumables
 	// It's air. You drink it. What did you expect? Refills your breath underwater. 10 second cooldown. You might drown waiting.
 	public class DrinkableAir : Drinkable
 	{
-		public override bool CanUseItem(Player player) => player.breath < player.breathMax && !player.HasBuff<Winded>();
+		public override bool CanUseItem(Player player) => !player.HasBuff<Winded>(); // drink it whenever. Even on land. Especially on land.
 
 		public override bool? UseItem(Player player) {
 			player.breath = player.breathMax;
@@ -119,35 +119,19 @@ namespace BagofChaos.Content.Items.Consumables
 		}
 	}
 
-	// Output of the Alchemical Dehydrator. Right click to find out which potion ingredient the thing turned into.
-	public class DehydratedMysteryPowder : ModItem
+	// Every NPC, player and enemy gets a faded upside-down twin reflected across the line under your feet. For a minute.
+	public class WeedyBeer : Drinkable
 	{
-		private static readonly int[] Ingredients = {
-			ItemID.Daybloom, ItemID.Moonglow, ItemID.Blinkroot, ItemID.Deathweed, ItemID.Waterleaf, ItemID.Fireblossom, ItemID.Shiverthorn,
-			ItemID.Mushroom, ItemID.GlowingMushroom, ItemID.VileMushroom, ItemID.ViciousMushroom, ItemID.Lens, ItemID.SharkFin, ItemID.Feather,
-			ItemID.AntlionMandible, ItemID.Cactus, ItemID.WormTooth, ItemID.RottenChunk, ItemID.Vertebrae, ItemID.Bone, ItemID.Coral, ItemID.Gel,
-			ItemID.PinkGel, ItemID.Stinger, ItemID.JungleSpores, ItemID.Obsidian, ItemID.Hay, ItemID.BottledWater, ItemID.Cloud, ItemID.RainCloud,
-			ItemID.FallenStar, ItemID.Hellstone, ItemID.Lens, ItemID.Vine, ItemID.Deathweed, ItemID.Daybloom, ItemID.Blinkroot,
-		};
-
-		public override void SetStaticDefaults() {
-			Item.ResearchUnlockCount = 25;
-		}
-
 		public override void SetDefaults() {
-			Item.width = 22;
-			Item.height = 24;
-			Item.maxStack = Item.CommonMaxStack;
-			Item.rare = ItemRarityID.Blue;
-			Item.value = Item.buyPrice(silver: 2);
+			base.SetDefaults();
+			Item.rare = ItemRarityID.Green;
+			Item.buffType = ModContent.BuffType<Weedy>();
+			Item.buffTime = 60 * 60;
+			Item.value = Item.buyPrice(silver: 30);
 		}
 
-		public override bool CanRightClick() => true;
-
-		public override void RightClick(Player player) {
-			int type = Ingredients[Main.rand.Next(Ingredients.Length)];
-			player.QuickSpawnItem(player.GetSource_OpenItem(Type), type, Main.rand.Next(1, 4));
-			SoundEngine.PlaySound(SoundID.Grab, player.Center);
+		public override void AddRecipes() {
+			CreateRecipe().AddIngredient(ItemID.Ale).AddIngredient(ItemID.Vine).AddIngredient(ItemID.JungleSpores, 2).AddTile(TileID.Bottles).Register();
 		}
 	}
 
@@ -204,7 +188,7 @@ namespace BagofChaos.Content.Items.Consumables
 			Item.UseSound = SoundID.Roar;
 		}
 
-		public override bool CanUseItem(Player player) => !ChaosEvents.InvasionActive;
+		public override bool CanUseItem(Player player) => !ChaosEvents.InvasionActive && !Main.dayTime; // the zombies only take the night shift
 
 		public override bool? UseItem(Player player) {
 			if (Main.netMode != NetmodeID.MultiplayerClient)

@@ -47,6 +47,15 @@ namespace BagofChaos.Content.Items.Ammo
 		}
 	}
 
+	public class YoureTallAmmo : ChaosBulletAmmo
+	{
+		protected override int ProjectileType => ModContent.ProjectileType<YoureTallBullet>();
+
+		public override void AddRecipes() {
+			CreateRecipe(50).AddIngredient(ItemID.MusketBall, 50).AddIngredient(ItemID.Rope, 10).AddRecipeGroup(RecipeGroupID.Wood, 5).AddTile(TileID.WorkBenches).Register();
+		}
+	}
+
 	public class BuddySystemBullet : ChaosBulletAmmo
 	{
 		protected override int ProjectileType => ModContent.ProjectileType<BuddyBullet>();

@@ -1,6 +1,6 @@
 displayName = Bag of Chaos
 author = LordVennin & ClaudeCode
-version = 0.1.0
+version = 0.2.0
 side = Both
 homepage = https://github.com/lordvennin/cursed-terraria-mod
 buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, tools\*, .git\*, .gitignore, README.md

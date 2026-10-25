@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using BagofChaos.Common.GlobalNPCs;
 using BagofChaos.Common.Systems;
 using BagofChaos.Content.Buffs;
 using BagofChaos.Content.Projectiles;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
-using Terraria.DataStructures;
 using Terraria.GameContent;
+using Terraria.Graphics;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -39,7 +38,9 @@ namespace BagofChaos.Common.Players
 		public bool FlashActive;
 
 		// ---------------- movement state ----------------
-		public const float UnreasonableSpeed = 34f; // px per tick; vanilla max run speed is ~3 (6 with boots)
+		public const float BaseUnreasonableSpeed = 34f;              // px per tick; vanilla max run speed is ~3 (6 with boots)
+		public const float UnreasonableSpeed = BaseUnreasonableSpeed * 3f; // tier 2: triple
+		public const float OmniSpeed = BaseUnreasonableSpeed * 4f;         // tier 3: quadruple
 		public Vector2 OmniMomentum;
 		private bool movementOverridden;
 		private float restoreVelocityY;
@@ -47,6 +48,8 @@ namespace BagofChaos.Common.Players
 
 		// ---------------- dash (Rocket Pack / Driller Pack) ----------------
 		public const int DashDown = 0, DashUp = 1, DashRight = 2, DashLeft = 3;
+		public const float RocketSpeed = 36f;
+		public const int RocketDuration = 28;
 		public int DashDir = -1;
 		public int DashTimer;
 		public int DashDelay;
@@ -78,7 +81,7 @@ namespace BagofChaos.Common.Players
 		// ---------------- misc ----------------
 		private readonly int[] textHitCooldown = new int[Main.maxNPCs];
 		private int muncherTimer;
-		public bool ZigNext = true; // Bottle of Zigzag alternates
+		private int jellyBounceCooldown;
 
 		public override void ResetEffects() {
 			InstantUpDown = InstantLeftRight = UnreasonableUpDown = UnreasonableLeftRight = OmniMovement = false;
@@ -126,16 +129,16 @@ namespace BagofChaos.Common.Players
 		}
 
 		public override void PostUpdateMiscEffects() {
-			// Null Gravity Beacon: players lose gravity but keep momentum.
-			if (NullGravitySystem.InField(Player.Center))
-				Player.gravity = 0f;
+			// Night of Moon Shoes: players float too.
+			if (ChaosEvents.MoonShoesActive)
+				Player.gravity *= 0.5f;
 		}
 
 		public override void PostUpdateRunSpeeds() {
 			if (ChaosEvents.FrogRainActive) {
-				// Everything is ice. Then twice as much ice.
-				Player.runSlowdown *= 0.05f;
-				Player.runAcceleration *= 0.5f;
+				// Everything is ice. Then twice as much ice. Then twice as much again.
+				Player.runSlowdown *= 0.02f;
+				Player.runAcceleration *= 0.35f;
 			}
 		}
 
@@ -185,10 +188,10 @@ namespace BagofChaos.Common.Players
 
 			if (OmniMovement) {
 				// Keys set momentum. Releasing keeps it. Opposite key flips it. No diagonal normalization. No brakes.
-				if (Player.controlLeft) OmniMomentum.X = -UnreasonableSpeed;
-				if (Player.controlRight) OmniMomentum.X = UnreasonableSpeed;
-				if (Player.controlUp) OmniMomentum.Y = -UnreasonableSpeed;
-				if (Player.controlDown) OmniMomentum.Y = UnreasonableSpeed;
+				if (Player.controlLeft) OmniMomentum.X = -OmniSpeed;
+				if (Player.controlRight) OmniMomentum.X = OmniSpeed;
+				if (Player.controlUp) OmniMomentum.Y = -OmniSpeed;
+				if (Player.controlDown) OmniMomentum.Y = OmniSpeed;
 				if (OmniMomentum.X != 0f) { vx = OmniMomentum.X; overrideX = true; }
 				if (OmniMomentum.Y != 0f) { vy = OmniMomentum.Y; overrideY = true; }
 			}
@@ -271,14 +274,14 @@ namespace BagofChaos.Common.Players
 
 			if (CanUseChaosDash() && DashDir != -1 && DashDelay == 0 && DashTimer == 0) {
 				DashIsDrill = !RocketPack; // Rocket Pack wins if both are equipped; nobody said this mod was balanced
-				float speed = DashIsDrill ? 11f : 18f;
+				float speed = DashIsDrill ? 11f : RocketSpeed;
 				DashVelocity = DashDir switch {
 					DashUp => new Vector2(0f, -speed),
 					DashDown => new Vector2(0f, speed),
 					DashLeft => new Vector2(-speed, 0f),
 					_ => new Vector2(speed, 0f),
 				};
-				DashTimer = DashIsDrill ? 32 : 28;
+				DashTimer = DashIsDrill ? 32 : RocketDuration;
 				DashDelay = DashIsDrill ? 45 : 70;
 				DashRotation = DashVelocity.ToRotation();
 				SoundEngine.PlaySound(DashIsDrill ? SoundID.Item23 : SoundID.Item13, Player.Center);
@@ -292,7 +295,6 @@ namespace BagofChaos.Common.Players
 			}
 
 			DashTimer--;
-			Player.velocity = DashVelocity;
 			Player.fallStart = (int)(Player.position.Y / 16f);
 			Player.eocDash = DashTimer;
 			Player.armorEffectDrawShadowEOCShield = true;
@@ -300,6 +302,7 @@ namespace BagofChaos.Common.Players
 			Player.fullRotationOrigin = Player.Size * 0.5f;
 
 			if (DashIsDrill) {
+				Player.velocity = DashVelocity;
 				DrillThroughTiles();
 			}
 			else {
@@ -308,6 +311,13 @@ namespace BagofChaos.Common.Players
 					Dust dust = Dust.NewDustDirect(Player.Center - DashVelocity * 0.5f - new Vector2(4f), 8, 8, DustID.Torch, 0f, 0f, 0, default, 2f);
 					dust.noGravity = true;
 					dust.velocity = -DashVelocity * 0.3f + Main.rand.NextVector2Circular(2f, 2f);
+				}
+				// Too fast for vanilla collision: sweep ourselves and blow up on the first wall.
+				SweepMove(DashVelocity, out bool hitX, out bool hitY);
+				Player.velocity = Vector2.Zero;
+				if (hitX || hitY) {
+					RocketImpact();
+					return;
 				}
 				// Hitting an enemy ends the flight explosively.
 				if (Player.whoAmI == Main.myPlayer) {
@@ -329,7 +339,7 @@ namespace BagofChaos.Common.Players
 				return;
 			DashTimer = 0;
 			Player.fullRotation = 0f;
-			Player.velocity = -DashVelocity * 0.35f;
+			Player.velocity = -DashVelocity * 0.2f;
 			if (Player.whoAmI == Main.myPlayer) {
 				int damage = (int)Player.GetTotalDamage(DamageClass.Melee).ApplyTo(90 + Player.statLifeMax2 / 5);
 				Projectile.NewProjectile(Player.GetSource_Accessory(Player.HeldItem), Player.Center, Vector2.Zero, ModContent.ProjectileType<RocketPackExplosion>(), damage, 12f, Player.whoAmI);
@@ -414,23 +424,54 @@ namespace BagofChaos.Common.Players
 			if (movementOverridden && restoreVelocity)
 				Player.velocity.Y = restoreVelocityY;
 
-			if (DashTimer > 0 && !DashIsDrill) {
-				// Vanilla zeroes an axis when we hit a wall; that's our cue to explode.
-				if ((DashVelocity.X != 0f && Player.velocity.X == 0f) || (DashVelocity.Y != 0f && Player.velocity.Y == 0f))
-					RocketImpact();
-			}
-
 			if (Player.whoAmI != Main.myPlayer || Player.dead)
 				return;
 
 			if (ChaosEvents.DeliriumActive && ChaosEvents.NearSpawn(Player))
 				Player.AddBuff(ModContent.BuffType<Delirious>(), 10, quiet: true);
 
+			if (ChaosEvents.JellyStormActive)
+				UpdateJellyBounce();
+
 			UpdateGlueAttachments();
 			UpdateMuncher();
 			if (TextBoxingGloves)
 				UpdateTextBoxing();
 			UpdateNPCHand();
+		}
+
+		// Bouncing Jelly Storm: players bounce off NPCs and other players too.
+		private void UpdateJellyBounce() {
+			if (jellyBounceCooldown > 0) {
+				jellyBounceCooldown--;
+				return;
+			}
+			foreach (NPC npc in Main.ActiveNPCs) {
+				if (!npc.Hitbox.Intersects(Player.Hitbox))
+					continue;
+				Bounce(npc.Center, npc.velocity.Length());
+				Vector2 away = npc.Center - Player.Center;
+				if (away != Vector2.Zero) away.Normalize(); else away = Vector2.UnitX;
+				npc.velocity = away * Math.Max(6f, npc.velocity.Length()) * 3f;
+				npc.netUpdate = true;
+				return;
+			}
+			foreach (Player other in Main.ActivePlayers) {
+				if (other.whoAmI == Player.whoAmI || other.dead || !other.Hitbox.Intersects(Player.Hitbox))
+					continue;
+				Bounce(other.Center, other.velocity.Length());
+				return;
+			}
+		}
+
+		private void Bounce(Vector2 from, float otherSpeed) {
+			Vector2 away = Player.Center - from;
+			if (away != Vector2.Zero) away.Normalize(); else away = -Vector2.UnitY;
+			float speed = Math.Max(5f, (Player.velocity.Length() + otherSpeed) * 0.5f + 1f) * 3f;
+			Player.velocity = away * Math.Min(speed, 30f);
+			Player.fallStart = (int)(Player.position.Y / 16f);
+			jellyBounceCooldown = 8;
+			SoundEngine.PlaySound(SoundID.NPCHit1 with { Pitch = 0.6f }, Player.Center);
 		}
 
 		private void UpdateGlueAttachments() {
@@ -484,15 +525,30 @@ namespace BagofChaos.Common.Players
 				Tile tile = Main.tile[tx, ty];
 				if (!tile.HasTile || !Main.tileSolid[tile.TileType])
 					continue;
-				bool had = true;
 				for (int hit = 0; hit < 3 && Main.tile[tx, ty].HasTile; hit++)
 					Player.PickTile(tx, ty, power);
-				if (had && !Main.tile[tx, ty].HasTile) {
+				if (!Main.tile[tx, ty].HasTile) {
 					SoundEngine.PlaySound(SoundID.Item2 with { Pitch = 0.4f }, Player.Center);
 					if (MuncherSetBonus)
 						Player.Heal(1);
 				}
 			}
+		}
+
+		// ------------------------------------------------------------------------------------------------------------
+		// Text Boxing Gloves: every piece of text on screen is a weapon. Damage numbers, pickup text, and UI text.
+		// ------------------------------------------------------------------------------------------------------------
+		private static Vector2 UIToWorld(Vector2 uiPos) {
+			// UI space (scaled by UIScale) -> screen pixels -> world, undoing the game zoom around the screen center.
+			Vector2 screen = uiPos * Main.UIScale;
+			Vector2 half = new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f;
+			return (screen - half) / Main.GameViewMatrix.Zoom + half + Main.screenPosition;
+		}
+
+		private static Rectangle UIRectToWorld(Rectangle ui) {
+			Vector2 tl = UIToWorld(new Vector2(ui.X, ui.Y));
+			Vector2 br = UIToWorld(new Vector2(ui.Right, ui.Bottom));
+			return new Rectangle((int)tl.X, (int)tl.Y, (int)(br.X - tl.X), (int)(br.Y - tl.Y));
 		}
 
 		private void UpdateTextBoxing() {
@@ -501,21 +557,46 @@ namespace BagofChaos.Common.Players
 					textHitCooldown[i]--;
 			}
 			var rects = new List<(Rectangle rect, int length)>();
+
+			// Damage numbers and other combat text (world space, centered on position).
 			for (int i = 0; i < Main.combatText.Length; i++) {
 				CombatText ct = Main.combatText[i];
 				if (!ct.active || string.IsNullOrEmpty(ct.text))
 					continue;
 				Vector2 size = FontAssets.CombatText[ct.crit ? 1 : 0].Value.MeasureString(ct.text) * ct.scale;
-				rects.Add((new Rectangle((int)(ct.position.X - size.X / 2f), (int)(ct.position.Y - size.Y / 2f), (int)size.X, (int)size.Y), ct.text.Length));
+				Rectangle rect = new Rectangle((int)(ct.position.X - size.X / 2f), (int)(ct.position.Y - size.Y / 2f), (int)size.X, (int)size.Y);
+				rect.Inflate(6, 6);
+				rects.Add((rect, ct.text.Length));
 			}
+			// Item pickup text.
 			for (int i = 0; i < Main.popupText.Length; i++) {
 				PopupText pt = Main.popupText[i];
 				if (!pt.active || string.IsNullOrEmpty(pt.name))
 					continue;
 				string text = pt.stack > 1 ? $"{pt.name} ({pt.stack})" : pt.name;
 				Vector2 size = FontAssets.MouseText.Value.MeasureString(text) * pt.scale;
-				rects.Add((new Rectangle((int)(pt.position.X - size.X / 2f), (int)(pt.position.Y - size.Y / 2f), (int)size.X, (int)size.Y), text.Length));
+				Rectangle rect = new Rectangle((int)(pt.position.X - size.X / 2f), (int)(pt.position.Y - size.Y / 2f), (int)size.X, (int)size.Y);
+				rect.Inflate(6, 6);
+				rects.Add((rect, text.Length));
 			}
+			// UI text: the held item's name above the hotbar, the chat box when open, and the mouse-over text (tooltips, NPC names).
+			string heldName = Player.HeldItem?.Name;
+			if (!string.IsNullOrEmpty(heldName) && !Main.playerInventory) {
+				Vector2 size = FontAssets.MouseText.Value.MeasureString(heldName);
+				rects.Add((UIRectToWorld(new Rectangle((int)(236f - size.X / 2f), 0, (int)size.X, (int)size.Y)), heldName.Length));
+			}
+			if (Main.drawingPlayerChat) {
+				int uiHeight = (int)(Main.screenHeight / Main.UIScale);
+				rects.Add((UIRectToWorld(new Rectangle(78, uiHeight - 36, 520, 32)), 40)); // the input line
+				rects.Add((UIRectToWorld(new Rectangle(78, uiHeight - 36 - 21 * 10, 520, 21 * 10)), 80)); // recent messages above it
+			}
+			string hover = Main.hoverItemName;
+			if (!string.IsNullOrEmpty(hover) && !Main.playerInventory) {
+				Vector2 size = FontAssets.MouseText.Value.MeasureString(hover);
+				Vector2 mouse = new Vector2(Main.mouseX, Main.mouseY) / Main.UIScale + new Vector2(10f, 10f);
+				rects.Add((UIRectToWorld(new Rectangle((int)mouse.X, (int)mouse.Y, (int)size.X, (int)size.Y)), hover.Length));
+			}
+
 			if (rects.Count == 0)
 				return;
 			foreach (NPC npc in Main.ActiveNPCs) {
@@ -579,6 +660,20 @@ namespace BagofChaos.Common.Players
 			// Being carried around by a glued zombie is bad enough without it also biting you every frame.
 			return GluedToNPC != npc.whoAmI;
 		}
+
+		// ------------------------------------------------------------------------------------------------------------
+		// Weedy Beer: every player is reflected upside down across the line under the local player's feet.
+		// ------------------------------------------------------------------------------------------------------------
+		public override void DrawPlayer(Camera camera) {
+			if (Main.gameMenu || !Main.LocalPlayer.HasBuff<Weedy>() || Player.dead)
+				return;
+			float mirrorY = Main.LocalPlayer.Bottom.Y;
+			Vector2 center = Player.Center + new Vector2(0f, Player.gfxOffY);
+			Vector2 mirroredCenter = new Vector2(center.X, 2f * mirrorY - center.Y);
+			Vector2 position = mirroredCenter - Player.Size * 0.5f;
+			// A half turn is a vertical flip plus a horizontal flip; close enough to a reflection for a drunk.
+			Main.PlayerRenderer.DrawPlayer(camera, Player, position, Player.fullRotation + MathHelper.Pi, Player.Size * 0.5f, 0.45f);
+		}
 	}
 
 	// Tiles copied by the Block Rod. Tile-frame-important tiles (furniture, trees, etc.) are left where they are.
@@ -601,6 +696,7 @@ namespace BagofChaos.Common.Players
 
 		public int Width;
 		public int Height;
+		public Point Origin;
 		public TileSnapshot[,] Tiles;
 
 		public static BlockRodClipboard Cut(Point topLeft, int width, int height) {

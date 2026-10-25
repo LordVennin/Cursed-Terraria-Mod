@@ -68,6 +68,14 @@ namespace BagofChaos.Content.Buffs
 		}
 	}
 
+	// Weedy Beer: everything has an upside-down reflection under your feet.
+	public class Weedy : ModBuff
+	{
+		public override void SetStaticDefaults() {
+			Main.buffNoSave[Type] = true;
+		}
+	}
+
 	// Pong Power minion buff: keeps the paddles alive.
 	public class PongBuff : ModBuff
 	{

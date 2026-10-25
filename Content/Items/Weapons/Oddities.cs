@@ -75,6 +75,11 @@ namespace BagofChaos.Content.Items.Weapons
 	// Two pong paddles follow your cursor on the top and bottom of the screen. Click to serve a ball that grows with every bounce.
 	public class PongPower : ModItem
 	{
+		protected virtual bool Green => false;
+		protected virtual int MaxBalls => 5;
+		protected virtual float ServeSpeed => 7f;
+		protected virtual int PaddleCount => 2;
+
 		public override void SetStaticDefaults() {
 			ItemID.Sets.GamepadWholeScreenUseRange[Type] = true;
 			ItemID.Sets.LockOnIgnoresCollision[Type] = true;
@@ -98,17 +103,24 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.shoot = ModContent.ProjectileType<PongBall>();
 		}
 
+		public override bool CanUseItem(Player player) => player.ownedProjectileCounts[ModContent.ProjectileType<PongBall>()] < MaxBalls;
+
 		public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback) {
 			player.AddBuff(Item.buffType, 2);
 			int paddleType = ModContent.ProjectileType<PongPaddle>();
-			if (player.ownedProjectileCounts[paddleType] < 2) {
-				Projectile.NewProjectile(source, player.Center, Vector2.Zero, paddleType, damage, knockback, player.whoAmI, 0f);
-				Projectile.NewProjectile(source, player.Center, Vector2.Zero, paddleType, damage, knockback, player.whoAmI, 1f);
+			if (player.ownedProjectileCounts[paddleType] != PaddleCount) {
+				// Swapping between the two versions: clear the old set and summon a fresh one.
+				foreach (Projectile paddle in Main.ActiveProjectiles) {
+					if (paddle.type == paddleType && paddle.owner == player.whoAmI)
+						paddle.Kill();
+				}
+				for (int side = 0; side < PaddleCount; side++)
+					Projectile.NewProjectile(source, player.Center, Vector2.Zero, paddleType, damage, knockback, player.whoAmI, side, Green ? 1f : 0f);
 			}
 			Vector2 spawn = Main.MouseWorld;
 			player.LimitPointToPlayerReachableArea(ref spawn);
-			Vector2 serve = new Vector2(Main.rand.NextFloat(-4f, 4f), Main.rand.NextBool() ? 7f : -7f);
-			int ball = Projectile.NewProjectile(source, spawn, serve, type, damage, knockback, player.whoAmI);
+			Vector2 serve = new Vector2(Main.rand.NextFloat(-4f, 4f), Main.rand.NextBool() ? ServeSpeed : -ServeSpeed);
+			int ball = Projectile.NewProjectile(source, spawn, serve, type, damage, knockback, player.whoAmI, 0f, Green ? 1f : 0f);
 			if (ball >= 0 && ball < Main.maxProjectiles)
 				Main.projectile[ball].originalDamage = damage;
 			return false;
@@ -116,6 +128,26 @@ namespace BagofChaos.Content.Items.Weapons
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.Wire, 30).AddIngredient(ItemID.Glass, 10).AddIngredient(ItemID.SoulofLight, 5).AddTile(TileID.Anvils).Register();
+		}
+	}
+
+	// Four longer paddles, twice the ball speed, ten balls. Green, because upgrades are green.
+	public class GreenPongPower : PongPower
+	{
+		protected override bool Green => true;
+		protected override int MaxBalls => 10;
+		protected override float ServeSpeed => 14f;
+		protected override int PaddleCount => 4;
+
+		public override void SetDefaults() {
+			base.SetDefaults();
+			Item.damage = 45;
+			Item.rare = ItemRarityID.Lime;
+			Item.value = Item.buyPrice(gold: 15);
+		}
+
+		public override void AddRecipes() {
+			CreateRecipe().AddIngredient<PongPower>().AddIngredient(ItemID.ChlorophyteBar, 10).AddIngredient(ItemID.Wire, 30).AddTile(TileID.MythrilAnvil).Register();
 		}
 	}
 
@@ -168,7 +200,7 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.value = Item.buyPrice(gold: 2);
 			Item.UseSound = SoundID.Item1;
 			Item.shoot = ModContent.ProjectileType<GparrlingHookProjectile>();
-			Item.shootSpeed = 18f;
+			Item.shootSpeed = 36f;
 		}
 
 		public override bool CanUseItem(Player player) => player.ownedProjectileCounts[Item.shoot] == 0;

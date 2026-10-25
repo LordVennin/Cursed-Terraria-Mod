@@ -1,5 +1,4 @@
 using BagofChaos.Common.Players;
-using BagofChaos.Common.Systems;
 using BagofChaos.Content.NPCs;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -59,12 +58,6 @@ namespace BagofChaos.Common.GlobalProjectiles
 				float speed = projectile.velocity.Length();
 				if (preAIVelocity != Vector2.Zero && speed > 0.01f)
 					projectile.velocity = Vector2.Normalize(preAIVelocity) * speed;
-			}
-			if (NullGravitySystem.InField(projectile.Center)) {
-				// Undo gravity-shaped nudges (small positive Y accelerations) so things drift instead of fall.
-				float dy = projectile.velocity.Y - preAIVelocity.Y;
-				if (dy > 0f && dy < 0.6f)
-					projectile.velocity.Y = preAIVelocity.Y;
 			}
 		}
 

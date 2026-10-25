@@ -21,21 +21,6 @@ namespace BagofChaos.Content.Items.Placeable
 		}
 	}
 
-	public class NullGravityBeacon : ModItem
-	{
-		public override void SetDefaults() {
-			Item.DefaultToPlaceableTile(ModContent.TileType<NullGravityBeaconTile>());
-			Item.width = 20;
-			Item.height = 30;
-			Item.rare = ItemRarityID.LightRed;
-			Item.value = Item.buyPrice(gold: 3);
-		}
-
-		public override void AddRecipes() {
-			CreateRecipe().AddRecipeGroup(RecipeGroupID.IronBar, 10).AddIngredient(ItemID.FallenStar, 5).AddIngredient(ItemID.GravitationPotion).AddTile(TileID.Anvils).Register();
-		}
-	}
-
 	public abstract class WeatherBottle : ModItem
 	{
 		protected abstract int Style { get; }

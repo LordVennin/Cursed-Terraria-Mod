@@ -1,12 +1,16 @@
+using System.Collections.Generic;
 using System.IO;
 using BagofChaos.Content.NPCs;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Chat;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Terraria.UI;
 
 namespace BagofChaos.Common.Systems
 {
@@ -14,17 +18,17 @@ namespace BagofChaos.Common.Systems
 	// plus the two "weather" states driven by beacons (Bouncing Jelly Storm, Slippery Frog Rain).
 	public class ChaosEvents : ModSystem
 	{
-		// ---- Delirium ----
+		// ---- Delirium: 100 silhouettes must fall ----
 		public static bool DeliriumActive;
-		public static int DeliriumTimeLeft;
-		public const int DeliriumDuration = 60 * 60 * 4; // 4 minutes of silhouettes
+		public static int DeliriumKills;
+		public const int DeliriumKillsNeeded = 100;
 		private static int deliriumSwapCooldown;
 		public const int DeliriumSwapCooldown = 60 * 15; // capped at once per 15 seconds
 
-		// ---- Corporate Zombie Invasion ----
+		// ---- Corporate Zombie Invasion: night only, 100 layoffs ----
 		public static bool InvasionActive;
 		public static int InvasionKills;
-		public static int InvasionKillsNeeded = 60;
+		public const int InvasionKillsNeeded = 100;
 		public const int InvasionKillsForCEO = 30;
 		public static bool CEODefeated;
 
@@ -38,7 +42,7 @@ namespace BagofChaos.Common.Systems
 
 		public override void ClearWorld() {
 			DeliriumActive = false;
-			DeliriumTimeLeft = 0;
+			DeliriumKills = 0;
 			deliriumSwapCooldown = 0;
 			InvasionActive = false;
 			InvasionKills = 0;
@@ -50,7 +54,7 @@ namespace BagofChaos.Common.Systems
 		public override void SaveWorldData(TagCompound tag) {
 			if (DeliriumActive) {
 				tag["deliriumActive"] = true;
-				tag["deliriumTime"] = DeliriumTimeLeft;
+				tag["deliriumKills"] = DeliriumKills;
 			}
 			if (InvasionActive) {
 				tag["invasionActive"] = true;
@@ -64,7 +68,7 @@ namespace BagofChaos.Common.Systems
 
 		public override void LoadWorldData(TagCompound tag) {
 			DeliriumActive = tag.ContainsKey("deliriumActive");
-			DeliriumTimeLeft = tag.GetInt("deliriumTime");
+			DeliriumKills = tag.GetInt("deliriumKills");
 			InvasionActive = tag.ContainsKey("invasionActive");
 			InvasionKills = tag.GetInt("invasionKills");
 			CEODefeated = tag.ContainsKey("ceoDefeated");
@@ -73,13 +77,13 @@ namespace BagofChaos.Common.Systems
 
 		public override void NetSend(BinaryWriter writer) {
 			writer.WriteFlags(DeliriumActive, InvasionActive, MoonShoesActive, CEODefeated);
-			writer.Write(DeliriumTimeLeft);
+			writer.Write(DeliriumKills);
 			writer.Write(InvasionKills);
 		}
 
 		public override void NetReceive(BinaryReader reader) {
 			reader.ReadFlags(out DeliriumActive, out InvasionActive, out MoonShoesActive, out CEODefeated);
-			DeliriumTimeLeft = reader.ReadInt32();
+			DeliriumKills = reader.ReadInt32();
 			InvasionKills = reader.ReadInt32();
 		}
 
@@ -106,18 +110,29 @@ namespace BagofChaos.Common.Systems
 			if (DeliriumActive || Main.netMode == NetmodeID.MultiplayerClient)
 				return;
 			DeliriumActive = true;
-			DeliriumTimeLeft = DeliriumDuration;
+			DeliriumKills = 0;
 			deliriumSwapCooldown = DeliriumSwapCooldown;
 			Announce("DeliriumStart", new Color(150, 60, 200));
 			Sync();
 		}
 
+		public static void RegisterDeliriumKill() {
+			if (!DeliriumActive || Main.netMode == NetmodeID.MultiplayerClient)
+				return;
+			DeliriumKills++;
+			if (DeliriumKills >= DeliriumKillsNeeded) {
+				DeliriumActive = false;
+				Announce("DeliriumEnd", new Color(150, 60, 200));
+			}
+			Sync();
+		}
+
 		public static void StartInvasion() {
-			if (InvasionActive || Main.netMode == NetmodeID.MultiplayerClient)
+			if (InvasionActive || Main.netMode == NetmodeID.MultiplayerClient || Main.dayTime)
 				return;
 			InvasionActive = true;
 			InvasionKills = 0;
-			InvasionKillsNeeded = 60 + Main.CurrentFrameFlags.ActivePlayersCount * 20;
+			CEODefeated = false;
 			Announce("InvasionStart", new Color(170, 230, 120));
 			Sync();
 		}
@@ -128,12 +143,12 @@ namespace BagofChaos.Common.Systems
 			InvasionKills++;
 			if (npc.type == ModContent.NPCType<ZombieCEO>())
 				CEODefeated = true;
-			if (InvasionKills >= InvasionKillsNeeded && CEODefeated) {
+			if (InvasionKills >= InvasionKillsNeeded) {
 				InvasionActive = false;
 				Announce("InvasionEnd", new Color(170, 230, 120));
 			}
-			else if (InvasionKills % 10 == 0) {
-				Announce(InvasionKills >= InvasionKillsForCEO && !CEODefeated ? "InvasionCEO" : "InvasionProgress", new Color(170, 230, 120));
+			else if (InvasionKills == InvasionKillsForCEO) {
+				Announce("InvasionCEO", new Color(170, 230, 120));
 			}
 			Sync();
 		}
@@ -148,19 +163,11 @@ namespace BagofChaos.Common.Systems
 
 		// ------------------------------------------------------------------------------------------------------------
 		public override void PostUpdateWorld() {
-			// Delirium countdown + the swap
 			if (DeliriumActive) {
-				DeliriumTimeLeft--;
 				if (deliriumSwapCooldown > 0)
 					deliriumSwapCooldown--;
 				else if (Main.rand.NextBool(90))
 					TryDeliriumSwap();
-
-				if (DeliriumTimeLeft <= 0) {
-					DeliriumActive = false;
-					Announce("DeliriumEnd", new Color(150, 60, 200));
-					Sync();
-				}
 			}
 
 			// Night of Moon Shoes: rolled once per night, ends at dawn.
@@ -176,9 +183,13 @@ namespace BagofChaos.Common.Systems
 					Announce("MoonShoesEnd", new Color(240, 240, 160));
 					Sync();
 				}
+				// The corporate zombies clock out at dawn.
+				if (InvasionActive) {
+					InvasionActive = false;
+					Announce("InvasionDawn", new Color(170, 230, 120));
+					Sync();
+				}
 			}
-
-			// Corporate zombies don't respect the day/night cycle, but if nobody is around the invasion just stalls.
 		}
 
 		private static void TryDeliriumSwap() {
@@ -213,6 +224,46 @@ namespace BagofChaos.Common.Systems
 			else {
 				player.Teleport(position, 1);
 			}
+		}
+
+		// ------------------------------------------------------------------------------------------------------------
+		// Progress bars, drawn like the vanilla invasion bar (bottom right).
+		// ------------------------------------------------------------------------------------------------------------
+		public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers) {
+			int index = layers.FindIndex(layer => layer.Name.Equals("Vanilla: Invasion Progress Bars"));
+			if (index < 0)
+				index = layers.Count - 1;
+			layers.Insert(index + 1, new LegacyGameInterfaceLayer("BagofChaos: Event Progress", DrawProgressBars, InterfaceScaleType.UI));
+		}
+
+		private static bool DrawProgressBars() {
+			if (Main.gameMenu || Main.LocalPlayer == null)
+				return true;
+			int slot = 0;
+			if (DeliriumActive && NearSpawn(Main.LocalPlayer))
+				DrawBar(slot++, Language.GetTextValue("Mods.BagofChaos.Events.DeliriumName"), DeliriumKills, DeliriumKillsNeeded, new Color(150, 60, 200));
+			if (InvasionActive && NearSpawn(Main.LocalPlayer))
+				DrawBar(slot++, Language.GetTextValue("Mods.BagofChaos.Events.InvasionName"), InvasionKills, InvasionKillsNeeded, new Color(120, 190, 90));
+			return true;
+		}
+
+		private static void DrawBar(int slot, string name, int progress, int max, Color accent) {
+			SpriteBatch sb = Main.spriteBatch;
+			Texture2D pixel = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/Pixel").Value;
+			int uiWidth = (int)(Main.screenWidth / Main.UIScale);
+			int uiHeight = (int)(Main.screenHeight / Main.UIScale);
+			// Same corner as the vanilla invasion bar; the vanilla one (if any) sits in the first slot area, so we stack upward.
+			Vector2 center = new Vector2(uiWidth - 120, uiHeight - 40 - slot * 70 - (Main.invasionProgressDisplayLeft > 0 ? 70 : 0));
+			float percent = MathHelper.Clamp(progress / (float)max, 0f, 1f);
+
+			Rectangle panel = new Rectangle((int)center.X - 100, (int)center.Y - 36, 200, 72);
+			Utils.DrawInvBG(sb, panel, new Color(63, 65, 151, 255) * 0.785f);
+			Utils.DrawBorderString(sb, name, new Vector2(center.X, center.Y - 22), accent, 0.9f, 0.5f, 0.5f);
+
+			Rectangle bar = new Rectangle((int)center.X - 85, (int)center.Y + 4, 170, 14);
+			sb.Draw(pixel, bar, Color.Black * 0.6f);
+			sb.Draw(pixel, new Rectangle(bar.X + 2, bar.Y + 2, (int)((bar.Width - 4) * percent), bar.Height - 4), accent);
+			Utils.DrawBorderString(sb, $"{(int)(percent * 100f)}%", new Vector2(center.X, bar.Y + bar.Height / 2f + 1), Color.White, 0.75f, 0.5f, 0.5f);
 		}
 	}
 }

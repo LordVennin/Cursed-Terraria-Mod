@@ -151,7 +151,7 @@ namespace BagofChaos.Content.Items.Weapons
 		public override Vector2? HoldoutOffset() => new Vector2(-8f, 0f);
 
 		public override void ModifyShootStats(Player player, ref Vector2 position, ref Vector2 velocity, ref int type, ref int damage, ref float knockback) {
-			velocity = velocity.RotatedByRandom(MathHelper.ToRadians(12));
+			velocity = velocity.RotatedByRandom(MathHelper.ToRadians(2));
 		}
 
 		public override void AddRecipes() {
@@ -170,7 +170,7 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.DefaultToRangedWeapon(ProjectileID.RocketI, AmmoID.Rocket, singleShotTime: 30, shotVelocity: 6f, hasAutoReuse: true);
 			Item.width = 52;
 			Item.height = 22;
-			Item.damage = 60;
+			Item.damage = 150;
 			Item.knockBack = 4f;
 			Item.UseSound = SoundID.Item11;
 			Item.rare = ItemRarityID.Purple;

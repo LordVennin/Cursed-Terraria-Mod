@@ -20,8 +20,8 @@ namespace BagofChaos.Common.Configs
 		[DefaultValue(true)]
 		public bool EnableTMFlashDarkness { get; set; }
 
-		[Range(10, 60)]
-		[DefaultValue(20)]
+		[Range(5, 40)]
+		[DefaultValue(10)]
 		[Slider]
 		public int TMFlashVisionTiles { get; set; }
 

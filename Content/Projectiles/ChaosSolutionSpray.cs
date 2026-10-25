@@ -16,7 +16,8 @@ namespace BagofChaos.Content.Projectiles
 			TileID.RainCloud, TileID.SnowCloud, TileID.HoneyBlock, TileID.CrispyHoneyBlock, TileID.Hive, TileID.Asphalt, TileID.Glass, TileID.PumpkinBlock,
 			TileID.SlimeBlock, TileID.PinkSlimeBlock, TileID.FrozenSlimeBlock, TileID.BoneBlock, TileID.FleshBlock, TileID.Cactus, TileID.Spikes,
 			TileID.WoodBlock, TileID.LivingWood, TileID.DynastyWood, TileID.Grass, TileID.CorruptGrass, TileID.CrimsonGrass, TileID.HallowedGrass,
-			TileID.JungleGrass, TileID.MushroomGrass, TileID.GoldCoinPile, TileID.MeteoriteBrick, TileID.LihzahrdBrick, TileID.ShimmerBlock,
+			TileID.JungleGrass, TileID.MushroomGrass, TileID.MeteoriteBrick, TileID.LihzahrdBrick, TileID.ShimmerBlock,
+			TileID.AmethystGemspark, TileID.TopazGemspark, TileID.SapphireGemspark, TileID.EmeraldGemspark, TileID.RubyGemspark, TileID.DiamondGemspark, TileID.AmberGemspark,
 		};
 
 		public ref float Progress => ref Projectile.ai[0];

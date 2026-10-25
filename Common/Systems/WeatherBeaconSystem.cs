@@ -75,7 +75,7 @@ namespace BagofChaos.Common.Systems
 			ActiveStyle = -1;
 			ActivePosition = Point16.NegativeOne;
 			// Control returns to Terraria's ordinary weather system. We only clean up what we forced.
-			if (oldStyle == StyleRain || oldStyle == StyleStorm || oldStyle == StyleBlizzard) {
+			if (oldStyle == StyleRain || oldStyle == StyleStorm || oldStyle == StyleBlizzard || oldStyle == StyleJellyStorm || oldStyle == StyleFrogRain) {
 				Main.StopRain();
 				Main.windSpeedTarget = Main.rand.NextFloat(-0.2f, 0.2f);
 			}
@@ -152,7 +152,14 @@ namespace BagofChaos.Common.Systems
 					break;
 				case StyleJellyStorm:
 				case StyleFrogRain:
-					// Purely custom effects, handled elsewhere. We leave vanilla weather alone.
+					// Custom effects handled elsewhere, but it still looks (and sounds) like rain.
+					if (!Main.raining || force)
+						Main.StartRain();
+					Main.rainTime = 36000;
+					Main.maxRaining = 0.7f;
+					Main.windSpeedTarget = 0.3f;
+					if (Sandstorm.Happening)
+						Sandstorm.StopSandstorm();
 					break;
 			}
 		}

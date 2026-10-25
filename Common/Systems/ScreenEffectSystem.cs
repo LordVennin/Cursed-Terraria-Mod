@@ -78,18 +78,21 @@ namespace BagofChaos.Common.Systems
 			Texture2D mask = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/DarknessMask").Value;
 			Texture2D pixel = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/Pixel").Value;
 			Vector2 center = WorldToScreen(Main.LocalPlayer.Center);
+			// The mask is clear up to 55% of its half-size and fully black from 66% on, i.e. light radius R fades to black at 1.2R (10 -> 12 tiles).
 			float holeRadius = config.TMFlashVisionTiles * 16f * Main.GameViewMatrix.Zoom.X / Main.UIScale;
 			float scale = holeRadius / (0.55f * mask.Width / 2f);
 			float half = mask.Width * scale / 2f;
 			Color black = Color.Black;
 			Main.spriteBatch.Draw(mask, center, null, black, 0f, mask.Size() * 0.5f, scale, SpriteEffects.None, 0f);
-			int w = (int)(Main.screenWidth / Main.UIScale) + 4;
-			int h = (int)(Main.screenHeight / Main.UIScale) + 4;
-			int left = (int)(center.X - half), right = (int)(center.X + half), top = (int)(center.Y - half), bottom = (int)(center.Y + half);
-			if (left > 0) Main.spriteBatch.Draw(pixel, new Rectangle(-2, -2, left + 2, h), black);
-			if (right < w) Main.spriteBatch.Draw(pixel, new Rectangle(right, -2, w - right + 2, h), black);
-			if (top > 0) Main.spriteBatch.Draw(pixel, new Rectangle(-2, -2, w, top + 2), black);
-			if (bottom < h) Main.spriteBatch.Draw(pixel, new Rectangle(-2, bottom, w, h - bottom + 2), black);
+			// Everything outside the mask square is solid black. Oversized on purpose so no UI scale / zoom combination leaves a gap.
+			int w = (int)(Main.screenWidth / Main.UIScale) * 2 + 64;
+			int h = (int)(Main.screenHeight / Main.UIScale) * 2 + 64;
+			int left = (int)System.Math.Floor(center.X - half) + 1, right = (int)System.Math.Ceiling(center.X + half) - 1;
+			int top = (int)System.Math.Floor(center.Y - half) + 1, bottom = (int)System.Math.Ceiling(center.Y + half) - 1;
+			Main.spriteBatch.Draw(pixel, new Rectangle(left - w, -h, w, h * 3), black);          // left of the mask
+			Main.spriteBatch.Draw(pixel, new Rectangle(right, -h, w, h * 3), black);             // right of the mask
+			Main.spriteBatch.Draw(pixel, new Rectangle(left, top - h, right - left, h), black);  // above
+			Main.spriteBatch.Draw(pixel, new Rectangle(left, bottom, right - left, h), black);   // below
 		}
 
 		private static void DrawAnaglyph(ChaosConfig config) {

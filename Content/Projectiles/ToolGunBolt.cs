@@ -6,14 +6,16 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Projectiles
 {
-	// Tool Gun bolt: duplicates any NPC it hits. Any. Yes, that one too.
+	// Tool Gun bolt: duplicates any NPC it touches. Any. Yes, that one too.
+	// Collision is done by hand so friendly NPCs, critters and bosses all count; the vanilla damage system is bypassed entirely.
 	public class ToolGunBolt : ModProjectile
 	{
 		public override void SetDefaults() {
 			Projectile.width = 10;
 			Projectile.height = 10;
-			Projectile.friendly = true;
-			Projectile.penetrate = 1;
+			Projectile.friendly = false;
+			Projectile.hostile = false;
+			Projectile.penetrate = -1;
 			Projectile.timeLeft = 120;
 			Projectile.aiStyle = -1;
 			Projectile.extraUpdates = 2;
@@ -28,23 +30,21 @@ namespace BagofChaos.Content.Projectiles
 				Dust dust = Dust.NewDustPerfect(Projectile.Center, DustID.Electric, Vector2.Zero, 0, default, 0.6f);
 				dust.noGravity = true;
 			}
-		}
 
-		// Town NPCs and critters are friendly, so a normal friendly projectile never "hits" them. We check manually.
-		public override bool? CanHitNPC(NPC target) => target.active && !target.dontTakeDamage ? true : null;
-
-		public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers) {
-			modifiers.FinalDamage *= 0f;
-			modifiers.Knockback *= 0f;
-		}
-
-		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
-			Duplicate(target);
+			if (Projectile.owner != Main.myPlayer)
+				return;
+			Rectangle hitbox = Projectile.Hitbox;
+			hitbox.Inflate(4, 4);
+			foreach (NPC npc in Main.ActiveNPCs) {
+				if (!hitbox.Intersects(npc.Hitbox))
+					continue;
+				Duplicate(npc);
+				Projectile.Kill();
+				return;
+			}
 		}
 
 		private void Duplicate(NPC target) {
-			if (Projectile.owner != Main.myPlayer)
-				return;
 			SoundEngine.PlaySound(SoundID.Item92, target.Center);
 			BagofChaos.SendSpawnNPC(target.type, target.Center + new Vector2(target.direction * -(target.width + 8), 0f), target.life);
 			for (int i = 0; i < 15; i++) {

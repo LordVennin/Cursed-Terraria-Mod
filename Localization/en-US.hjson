@@ -19,6 +19,15 @@ Mods: {
 					'''
 			}
 
+			YoureTallAmmo: {
+				DisplayName: You're Tall?
+				Tooltip:
+					'''
+					Stretches the target's sprite to four times its height
+					The hitbox stays exactly where it was. Mind your head.
+					'''
+			}
+
 			BuddySystemBullet: {
 				DisplayName: Buddy System Bullet
 				Tooltip:
@@ -131,9 +140,21 @@ Mods: {
 				DisplayName: Pong Power
 				Tooltip:
 					'''
-					Two paddles follow your cursor at the top and bottom of the screen
-					Click to serve a ball that grows and hits harder with every bounce
+					Two big paddles follow your cursor at the top and bottom of the screen
+					Click to serve a ball that grows and hits harder with every bounce (up to 5 balls)
+					Balls bounce off enemies back to the paddles and pop after 5 paddle bounces
 					Miss the ball and it's gone. Scales with summon damage.
+					'''
+			}
+
+			GreenPongPower: {
+				DisplayName: Green Pong Power
+				Tooltip:
+					'''
+					Four longer paddles follow your cursor on every edge of the screen
+					Ball speed doubled, up to 10 balls at once
+					Balls bounce off enemies back to the paddles and pop after 5 paddle bounces
+					It's green. That means it's better.
 					'''
 			}
 
@@ -151,7 +172,7 @@ Mods: {
 				DisplayName: Gparrling Hook
 				Tooltip:
 					'''
-					Pulls the hooked NPC to you
+					Pulls the hooked NPC to you, fast. Short range.
 					Ignores gravity, weight and knockback resistance
 					Yes, bosses too. No, this was not a good idea.
 					'''
@@ -172,8 +193,7 @@ Mods: {
 				Tooltip:
 					'''
 					Click and drag to pick up a chunk of blocks (up to 24x24)
-					Left click to place it precisely
-					Right click to throw it. It has momentum. It has gravity. It lands.
+					Left click to place it precisely, right click to put it back
 					Furniture and other delicate things stay where they are
 					'''
 			}
@@ -211,7 +231,7 @@ Mods: {
 				Tooltip:
 					'''
 					Pressing Up or Down instantly sets your vertical speed to an unreasonable value
-					Ignores every speed limit the game has
+					Three times as unreasonable as it used to be. Ignores every speed limit the game has.
 					'''
 			}
 
@@ -220,7 +240,7 @@ Mods: {
 				Tooltip:
 					'''
 					Pressing Left or Right instantly sets your horizontal speed to an unreasonable value
-					Ignores every speed limit the game has
+					Three times as unreasonable as it used to be. Ignores every speed limit the game has.
 					'''
 			}
 
@@ -228,7 +248,7 @@ Mods: {
 				DisplayName: Instant Omni Movement
 				Tooltip:
 					'''
-					Pressing any direction instantly sets your speed along that axis to unreasonable
+					Pressing any direction instantly sets your speed along that axis to four times unreasonable
 					Releasing a key does NOT remove momentum. Opposite key reverses it.
 					No diagonal normalization. No brakes. Walls are the brakes.
 					'''
@@ -244,31 +264,12 @@ Mods: {
 					'''
 			}
 
-			BottleOfZig: {
-				DisplayName: Bottle of Zig
-				Tooltip: Double jumping dashes you forward and up
-			}
-
-			BottleOfZag: {
-				DisplayName: Bottle of Zag
-				Tooltip: Double jumping dashes you forward and down
-			}
-
-			BottleOfZigzag: {
-				DisplayName: Bottle of Zigzag
-				Tooltip:
-					'''
-					Double jumping dashes you forward and up, then forward and down, then up, then...
-					You get it
-					'''
-			}
-
 			RocketPack: {
 				DisplayName: Rocket Pack
 				Tooltip:
 					'''
 					Replaces your dash with a GIGA rocket transformation
-					Double tap a direction to launch. Explodes on impact with terrain or enemies.
+					Double tap a direction to launch. Very fast. Very far. Explodes on impact with terrain or enemies.
 					Explosion damage scales with your melee damage and max life
 					'''
 			}
@@ -346,7 +347,7 @@ Mods: {
 				Tooltip:
 					'''
 					Only works in the Underground and Cavern layers
-					40% increased damage, but you can only see about 20 tiles
+					40% increased damage, but you can only see about 10 tiles
 					Disables homing on your bullets and magic
 					Flash was never a good move and this does not change that
 					'''
@@ -383,7 +384,7 @@ Mods: {
 				Tooltip:
 					'''
 					It's air. You drink it. What did you expect?
-					Restores your entire breath meter while underwater
+					Restores your entire breath meter. Drink it anywhere, any time, even with full lungs.
 					10 second cooldown. You might drown waiting. That's the point.
 					'''
 			}
@@ -417,13 +418,30 @@ Mods: {
 					'''
 			}
 
-			DehydratedMysteryPowder: {
-				DisplayName: Dehydrated Mystery Powder
+			WeedyBeer: {
+				DisplayName: Weedy Beer
 				Tooltip:
 					'''
-					Right click to open
-					Contains a random potion ingredient. Just add water.
-					Produced by the Alchemical Dehydrator
+					Every NPC, player and enemy gets an upside-down reflection right under your feet
+					Lasts a minute. Do not operate heavy machinery. Or light machinery.
+					'''
+			}
+
+			Monst3rItem: {
+				DisplayName: Monst3r
+				Tooltip:
+					'''
+					Summons a floating chibi Monst3r to light your way
+					(Placeholder art. He deserves better.)
+					'''
+			}
+
+			KaltsitItem: {
+				DisplayName: Kal'tsit
+				Tooltip:
+					'''
+					Summons a floating chibi Kal'tsit to judge you silently
+					(Placeholder art. She would not approve.)
 					'''
 			}
 
@@ -433,6 +451,7 @@ Mods: {
 					'''
 					Summons the Delirium
 					Silhouettes of enemies attack spawn and randomly switch places with you
+					Defeat 100 of them to make it stop
 					Do not operate heavy machinery
 					'''
 			}
@@ -441,7 +460,8 @@ Mods: {
 				DisplayName: Pink Slip
 				Tooltip:
 					'''
-					Summons the Corporate Zombie Invasion
+					Summons the Corporate Zombie Invasion (night only, they clock out at dawn)
+					Lay off 100 zombies to end it. All zombies now sell 3D TVs on contact.
 					We regret to inform you that your position has been eliminated
 					'''
 			}
@@ -465,19 +485,9 @@ Mods: {
 				DisplayName: Alchemical Dehydrator
 				Tooltip:
 					'''
-					Crafting station
-					Extracts potion ingredients from plants, critters and fish
-					Gold critters, dye plants and quest fish yield a bonus
-					'''
-			}
-
-			NullGravityBeacon: {
-				DisplayName: Null Gravity Beacon
-				Tooltip:
-					'''
-					Removes gravity from players, NPCs, items and projectiles nearby
-					Momentum is kept. Flying enemies forget how to fly.
-					Liquids are unaffected. They were too complicated.
+					Works like an Extractinator: hold a critter, fish or plant and right click the machine
+					Dehydrates it into a random potion ingredient
+					Gold critters, dye plants and quest fish yield 6 to 31 ingredients
 					'''
 			}
 
@@ -530,7 +540,7 @@ Mods: {
 				DisplayName: Bouncing Jelly Storm in a Bottle
 				Tooltip:
 					'''
-					Place it: NPCs no longer deal contact damage and bounce off each other
+					Place it: it rains, NPCs deal no contact damage, and players, NPCs and enemies all bounce off each other. Hard.
 					Last beacon placed wins. Break it to stop the bouncing.
 					'''
 			}
@@ -539,7 +549,7 @@ Mods: {
 				DisplayName: Slippery Frog Rain in a Bottle
 				Tooltip:
 					'''
-					Place it: every block is ice, but twice as slippery, and the frogs come out
+					Place it: it rains, every block is ice, four times as slippery, and the frogs come out
 					Last beacon placed wins. Break it to regain traction.
 					'''
 			}
@@ -580,11 +590,27 @@ Mods: {
 				DisplayName: Pong Power
 				Description: The paddles await your serve
 			}
+
+			Weedy: {
+				DisplayName: Weedy
+				Description: Everything has an upside-down twin. Or you do.
+			}
+
+			Monst3rBuff: {
+				DisplayName: Monst3r
+				Description: A floating chibi lights the way
+			}
+
+			KaltsitBuff: {
+				DisplayName: Kal'tsit
+				Description: A floating chibi follows you around
+			}
 		}
 
 		NPCs: {
 			TinCan.DisplayName: Tin Can
 			SlipperyFrog.DisplayName: Slippery Frog
+			GlueSlime.DisplayName: Glue Slime
 
 			ZombieSalesman: {
 				DisplayName: Zombie Salesman
@@ -616,6 +642,9 @@ Mods: {
 		Projectiles: {
 			GooglyBullet.DisplayName: Googly Eye
 			YoureLongBullet.DisplayName: Stretchy Bullet
+			YoureTallBullet.DisplayName: Stretchy Bullet
+			Monst3rProjectile.DisplayName: Monst3r
+			KaltsitProjectile.DisplayName: Kal'tsit
 			BuddyBullet.DisplayName: Buddy Bullet
 			ChaosSolutionSpray.DisplayName: Chaos Solution
 			GlueGlob.DisplayName: Glue Glob
@@ -626,7 +655,6 @@ Mods: {
 			PocketRat.DisplayName: Pocket Rat
 			GparrlingHookProjectile.DisplayName: Gparrling Hook
 			ToolGunBolt.DisplayName: Tool Gun Bolt
-			ThrownChunk.DisplayName: Thrown Chunk
 
 			PongBall: {
 				DisplayName: Pong Ball
@@ -636,12 +664,12 @@ Mods: {
 
 		Tiles: {
 			AlchemicalDehydratorTile.MapEntry: Alchemical Dehydrator
-			NullGravityBeaconTile.MapEntry: Null Gravity Beacon
 			WeatherBeaconTile.MapEntry: Weather Beacon
 		}
 
 		Bestiary: {
 			TinCan: A tin can. It is full of explosives. Nobody knows who filled it.
+			GlueSlime: A slime made of glue. It does not bite. It does not need to. Everything it touches becomes part of a growing, screaming pile.
 			SlipperyFrog: Slides sideways forever. When something gets in its way it simply is somewhere else. Scientists are baffled.
 			ZombieSalesman: Rose from the grave to hit his quota. While he's around, every item icon in your inventory is a zombie. That's his pitch.
 			ZombieIntern: Sits around and does nothing. Technically part of the invasion. Nobody has told it what to do.
@@ -649,6 +677,9 @@ Mods: {
 		}
 
 		Events: {
+			DeliriumName: Delirium
+			InvasionName: Corporate Zombies
+			InvasionDawn: Dawn breaks. The corporate zombies have clocked out.
 			DeliriumStart: Silhouettes gather at the edge of your vision...
 			DeliriumEnd: The silhouettes fade. Was any of that real?
 			InvasionStart: The Corporate Zombie Invasion has begun! Check your inbox.
@@ -668,6 +699,7 @@ Mods: {
 			BeaconRemoved: The weather beacon is gone. The weather is weather again.
 		}
 
+		Dehydrator.NotEligible: The Dehydrator only accepts living things that contain water (critters, fish, plants).
 		DeathMessages.DrinkableLava: "{0} drank lava. What did they expect?"
 
 		Configs: {
