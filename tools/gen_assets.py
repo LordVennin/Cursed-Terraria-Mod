@@ -587,11 +587,15 @@ def gen_npcs():
 def gen_buffs():
     B = "Content/Buffs/"
 
-    def buff(name, draw):
+    def buff(name, draw, folder=B):
         s = Sprite(32, 32)
         s.rect(0, 0, 31, 31, DARKGREY, outline=BLACK)
         draw(s)
-        s.save(B + name + ".png")
+        s.save(folder + name + ".png")
+
+    # Pet buffs live next to their pet classes in Content/Pets (tModLoader looks for textures beside the class's namespace path).
+    buff("Monst3rBuff", lambda s: (s.ellipse(8, 8, 23, 23, (230, 230, 240, 255)), s.ellipse(13, 13, 18, 18, RED)), "Content/Pets/")
+    buff("KaltsitBuff", lambda s: (s.ellipse(8, 8, 23, 23, (235, 235, 230, 255)), s.ellipse(13, 13, 18, 18, (90, 200, 140, 255))), "Content/Pets/")
 
     buff("GlueDebuff", lambda s: (s.ellipse(6, 6, 25, 25, WHITE), s.ellipse(12, 14, 20, 28, (255, 255, 200, 255))))
     buff("ThreeDDebuff", lambda s: (s.rect(3, 10, 14, 22, RED), s.rect(17, 10, 28, 22, BLUE)))
@@ -602,8 +606,6 @@ def gen_buffs():
     buff("Delirious", lambda s: (s.ellipse(6, 6, 25, 25, BLACK), s.ellipse(11, 11, 20, 20, PURPLE)))
     buff("CorporateSynergy", lambda s: (s.rect(6, 6, 25, 25, GOLD), s.text_ish(9, 12, 5, BLACK), s.text_ish(9, 18, 5, BLACK)))
     buff("Weedy", lambda s: (s.rect(10, 6, 21, 26, DARKBROWN), s.ellipse(12, 12, 19, 20, GREEN)))
-    buff("Monst3rBuff", lambda s: (s.ellipse(8, 8, 23, 23, (230, 230, 240, 255)), s.ellipse(13, 13, 18, 18, RED)))
-    buff("KaltsitBuff", lambda s: (s.ellipse(8, 8, 23, 23, (235, 235, 230, 255)), s.ellipse(13, 13, 18, 18, (90, 200, 140, 255))))
     buff("Rocketing", lambda s: (s.poly([(6, 24), (16, 4), (26, 24)], RED), s.poly([(12, 24), (16, 30), (20, 24)], ORANGE)))
 
 
