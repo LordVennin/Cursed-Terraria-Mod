@@ -1,1 +1,20 @@
-This description will show up on the steam page, check out https://steamcommunity.com/comment/Guide/formattinghelp.
+[h1]Bag of Chaos[/h1]
+A Terraria mod that is not meant to be taken seriously.
+
+[list]
+[*]Fart Reverb.mp3 - 1 damage, knockback measured in screens
+[*]Block Rod - pick up chunks of terrain and throw them
+[*]Sprite Slasher - legs on heads, heads on legs
+[*]Glue Gun - everything sticks to everything
+[*]Instant / Unreasonable / Omni movement accessories
+[*]NPC Lawnmower - keeps your town nice and tidy
+[*]Drinkable Air, Drinkable Lava, Solid Snake
+[*]Sky in a Bottle, Null Gravity Beacon, Weather Beacons
+[*]Explosive Healing Kit, TM Flash, Text Boxing Gloves
+[*]Pong Power, Chain Can, Rattling Gun, Pocket Rats, Tool Gun
+[*]Rocket Pack and Driller Pack dashes, Bottles of Zig and Zag
+[*]Muncher armor, Bouncing Jelly Storm, Night of Moon Shoes
+[*]Delirium and the Corporate Zombie Invasion (featuring the Zombie CEO)
+[/list]
+
+All sprites are placeholder programmer art.

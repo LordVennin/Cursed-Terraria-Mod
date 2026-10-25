@@ -1,0 +1,714 @@
+Mods: {
+	BagofChaos: {
+		Items: {
+			GooglyEyeAmmo: {
+				DisplayName: Googly Eye Ammo
+				Tooltip:
+					'''
+					Puts googly eyes on whatever it hits
+					They never stop watching
+					'''
+			}
+
+			YoureLongAmmo: {
+				DisplayName: You're Long?
+				Tooltip:
+					'''
+					Stretches the target's sprite to four times its width
+					The hitbox stays exactly where it was. Good luck.
+					'''
+			}
+
+			BuddySystemBullet: {
+				DisplayName: Buddy System Bullet
+				Tooltip:
+					'''
+					Applies Life Link
+					Every linked enemy on screen takes every hit any of them takes
+					This does not split the damage. It copies it.
+					'''
+			}
+
+			ChaosSolution: {
+				DisplayName: Chaos Solution
+				Tooltip:
+					'''
+					Used by the Clentaminator
+					Converts blocks into other, completely random blocks
+					Your base was nice. Was.
+					'''
+			}
+
+			GlueGun: {
+				DisplayName: Glue Gun
+				Tooltip:
+					'''
+					Like a paint sprayer, but glue
+					Anything glued sticks to anything it touches. Anything.
+					Fire burns the glue away. Eventually.
+					'''
+			}
+
+			ChainCan: {
+				DisplayName: Chain Can
+				Tooltip:
+					'''
+					Enemies hit summon tin cans next to them
+					Shoot the cans to blow them up
+					Please recycle
+					'''
+			}
+
+			VenomSnake: {
+				DisplayName: Venom Snake
+				Tooltip:
+					'''
+					All bullets inflict Venom
+					Kept you waiting, huh?
+					'''
+			}
+
+			RattlingGun: {
+				DisplayName: Rattling Gun
+				Tooltip:
+					'''
+					Fires high speed rats
+					Rats die on impact, deal damage and inflict Poison
+					Converts any bullet into a rat. Don't ask how.
+					'''
+			}
+
+			ToolGun: {
+				DisplayName: Tool Gun
+				Tooltip:
+					'''
+					Duplicates any NPC it hits
+					Any NPC
+					Think about it
+					'''
+			}
+
+			ToolMinigun: {
+				DisplayName: Tool Minigun
+				Tooltip:
+					'''
+					Rapid fire duplication of any NPC it hits
+					You didn't think about it
+					'''
+			}
+
+			CreditCannon: {
+				DisplayName: Credit Cannon
+				Tooltip:
+					'''
+					Uses rockets
+					Deals 100x damage, but only while the end credits are rolling
+					The game is over. Go nuts.
+					'''
+			}
+
+			FartReverb: {
+				DisplayName: Fart Reverb.mp3
+				Tooltip:
+					'''
+					Deals 1 damage
+					Knockback is measured in screens
+					Affects enemies, town folk, other players, and you
+					'''
+			}
+
+			SpriteSlasher: {
+				DisplayName: Sprite Slasher
+				Tooltip:
+					'''
+					Cuts the enemy's sprite in half and flips the halves
+					Legs on heads. Heads on legs. Permanently.
+					Purely cosmetic. The anatomy is a lie.
+					'''
+			}
+
+			PongPower: {
+				DisplayName: Pong Power
+				Tooltip:
+					'''
+					Two paddles follow your cursor at the top and bottom of the screen
+					Click to serve a ball that grows and hits harder with every bounce
+					Miss the ball and it's gone. Scales with summon damage.
+					'''
+			}
+
+			PocketRats: {
+				DisplayName: Pocket Rats
+				Tooltip:
+					'''
+					Throws a constant barrage of rats
+					Rats burst into poison clouds on impact
+					Where do they keep coming from
+					'''
+			}
+
+			GparrlingHook: {
+				DisplayName: Gparrling Hook
+				Tooltip:
+					'''
+					Pulls the hooked NPC to you
+					Ignores gravity, weight and knockback resistance
+					Yes, bosses too. No, this was not a good idea.
+					'''
+			}
+
+			NPCLawnmower: {
+				DisplayName: NPC Lawnmower
+				Tooltip:
+					'''
+					Keeps your town nice and tidy
+					Kills non-hostile NPCs on contact. Critters included.
+					Does not hurt enemies. It's a lawnmower, not a weapon.
+					'''
+			}
+
+			BlockRod: {
+				DisplayName: Block Rod
+				Tooltip:
+					'''
+					Click and drag to pick up a chunk of blocks (up to 24x24)
+					Left click to place it precisely
+					Right click to throw it. It has momentum. It has gravity. It lands.
+					Furniture and other delicate things stay where they are
+					'''
+			}
+
+			NPCHand: {
+				DisplayName: NPC Hand
+				Tooltip:
+					'''
+					Click and drag to pick up and move any NPC
+					Deals no damage
+					Rearrange your town. Or the Eye of Cthulhu.
+					'''
+			}
+
+			InstantUpDown: {
+				DisplayName: Instant Up/Down
+				Tooltip:
+					'''
+					Pressing Up or Down instantly sets your vertical speed to its maximum
+					Holding Up is basically flight. Nobody tested this.
+					'''
+			}
+
+			InstantLeftRight: {
+				DisplayName: Instant Left/Right
+				Tooltip:
+					'''
+					Pressing Left or Right instantly sets your horizontal speed to its maximum
+					Zero to max speed instantly. Normal speed limits apply.
+					'''
+			}
+
+			UnreasonableUpDown: {
+				DisplayName: Unreasonable Up/Down
+				Tooltip:
+					'''
+					Pressing Up or Down instantly sets your vertical speed to an unreasonable value
+					Ignores every speed limit the game has
+					'''
+			}
+
+			UnreasonableLeftRight: {
+				DisplayName: Unreasonable Left/Right
+				Tooltip:
+					'''
+					Pressing Left or Right instantly sets your horizontal speed to an unreasonable value
+					Ignores every speed limit the game has
+					'''
+			}
+
+			InstantOmniMovement: {
+				DisplayName: Instant Omni Movement
+				Tooltip:
+					'''
+					Pressing any direction instantly sets your speed along that axis to unreasonable
+					Releasing a key does NOT remove momentum. Opposite key reverses it.
+					No diagonal normalization. No brakes. Walls are the brakes.
+					'''
+			}
+
+			SkyInABottle: {
+				DisplayName: Sky in a Bottle
+				Tooltip:
+					'''
+					Replaces every double jump with a temporary cloud platform under your feet
+					Everyone can stand on it. It fades after a few seconds no matter what.
+					Extra jump charges mean extra clouds. Build a staircase. Regret it.
+					'''
+			}
+
+			BottleOfZig: {
+				DisplayName: Bottle of Zig
+				Tooltip: Double jumping dashes you forward and up
+			}
+
+			BottleOfZag: {
+				DisplayName: Bottle of Zag
+				Tooltip: Double jumping dashes you forward and down
+			}
+
+			BottleOfZigzag: {
+				DisplayName: Bottle of Zigzag
+				Tooltip:
+					'''
+					Double jumping dashes you forward and up, then forward and down, then up, then...
+					You get it
+					'''
+			}
+
+			RocketPack: {
+				DisplayName: Rocket Pack
+				Tooltip:
+					'''
+					Replaces your dash with a GIGA rocket transformation
+					Double tap a direction to launch. Explodes on impact with terrain or enemies.
+					Explosion damage scales with your melee damage and max life
+					'''
+			}
+
+			DrillerPack: {
+				DisplayName: Driller Pack
+				Tooltip:
+					'''
+					Replaces your dash with a mining drill dash
+					Double tap a direction to drill through blocks like a mole cart
+					Pickaxe power: 55%
+					'''
+			}
+
+			DrillerPackHellstone: {
+				DisplayName: Hellstone Driller Pack
+				Tooltip:
+					'''
+					Replaces your dash with a mining drill dash
+					Double tap a direction to drill through blocks like a mole cart
+					Pickaxe power: 100%
+					'''
+			}
+
+			DrillerPackChlorophyte: {
+				DisplayName: Chlorophyte Driller Pack
+				Tooltip:
+					'''
+					Replaces your dash with a mining drill dash
+					Double tap a direction to drill through blocks like a mole cart
+					Pickaxe power: 200%
+					'''
+			}
+
+			DrillerPackLuminite: {
+				DisplayName: Luminite Driller Pack
+				Tooltip:
+					'''
+					Replaces your dash with a mining drill dash
+					Double tap a direction to drill through blocks like a mole cart
+					Pickaxe power: 230%. There is nothing you cannot drill.
+					'''
+			}
+
+			LiquidSnake: {
+				DisplayName: Liquid Snake
+				Tooltip:
+					'''
+					You move through liquids at full speed
+					Water, lava, honey, shimmer. Full speed. Liquid.
+					'''
+			}
+
+			ThreeDGlasses: {
+				DisplayName: 3D Glasses
+				Tooltip:
+					'''
+					Prevents the 3D debuff
+					You somehow had the exact glasses for this bizarre situation
+					'''
+			}
+
+			ExplosiveHealingKit: {
+				DisplayName: Explosive Healing Kit
+				Tooltip:
+					'''
+					Your explosives heal instead of dealing damage or destroying blocks
+					Heals every player and friendly NPC in the blast, including you
+					Enemies take zero damage. Rockets are now a support class.
+					'''
+			}
+
+			TMFlash: {
+				DisplayName: TM Flash
+				Tooltip:
+					'''
+					Only works in the Underground and Cavern layers
+					40% increased damage, but you can only see about 20 tiles
+					Disables homing on your bullets and magic
+					Flash was never a good move and this does not change that
+					'''
+			}
+
+			TextBoxingGloves: {
+				DisplayName: Text Boxing Gloves
+				Tooltip:
+					'''
+					While equipped, all text on screen has a hitbox that damages enemies
+					Damage numbers hurt. Item pickup text hurts. Words hurt.
+					Longer text hits harder
+					'''
+			}
+
+			MuncherMask: {
+				DisplayName: Muncher Mask
+				Tooltip: Instantly eats any block at head level that you walk into, using your best pickaxe's power
+				SetBonus: Munch munch munch: every block eaten restores 1 life
+			}
+
+			MuncherShirt: {
+				DisplayName: Muncher Shirt
+				Tooltip: Instantly eats any block at chest level that you walk into, using your best pickaxe's power
+			}
+
+			MuncherShoes: {
+				DisplayName: Muncher Shoes
+				Tooltip: Instantly eats any block at foot level that you walk into, using your best pickaxe's power
+			}
+
+			DrinkableAir: {
+				DisplayName: Drinkable Air
+				Tooltip:
+					'''
+					It's air. You drink it. What did you expect?
+					Restores your entire breath meter while underwater
+					10 second cooldown. You might drown waiting. That's the point.
+					'''
+			}
+
+			DrinkableLava: {
+				DisplayName: Drinkable Lava
+				Tooltip:
+					'''
+					Kills you instantly
+					Yes, really. It's lava. You drink it.
+					'''
+			}
+
+			SolidSnake: {
+				DisplayName: Solid Snake
+				Tooltip:
+					'''
+					Phase through blocks for 10 seconds
+					Hold Up to climb. Does NOT prevent fall damage.
+					"It's just a box"
+					'''
+			}
+
+			ThreeDMovieTicket: {
+				DisplayName: 3D Movie Ticket
+				Tooltip:
+					'''
+					Admit one
+					Gives you the 3D debuff for a minute
+					Glasses sold separately
+					'''
+			}
+
+			DehydratedMysteryPowder: {
+				DisplayName: Dehydrated Mystery Powder
+				Tooltip:
+					'''
+					Right click to open
+					Contains a random potion ingredient. Just add water.
+					Produced by the Alchemical Dehydrator
+					'''
+			}
+
+			DeliriumPills: {
+				DisplayName: Delirium Pills
+				Tooltip:
+					'''
+					Summons the Delirium
+					Silhouettes of enemies attack spawn and randomly switch places with you
+					Do not operate heavy machinery
+					'''
+			}
+
+			PinkSlip: {
+				DisplayName: Pink Slip
+				Tooltip:
+					'''
+					Summons the Corporate Zombie Invasion
+					We regret to inform you that your position has been eliminated
+					'''
+			}
+
+			MoonShoes: {
+				DisplayName: Moon Shoes
+				Tooltip:
+					'''
+					Starts the Night of Moon Shoes (night only)
+					All NPCs have half gravity until dawn
+					Can also happen on its own. Nobody can stop it.
+					'''
+			}
+
+			SlipperyFrogItem: {
+				DisplayName: Slippery Frog
+				Tooltip: It slides. It teleports. It does not care.
+			}
+
+			AlchemicalDehydrator: {
+				DisplayName: Alchemical Dehydrator
+				Tooltip:
+					'''
+					Crafting station
+					Extracts potion ingredients from plants, critters and fish
+					Gold critters, dye plants and quest fish yield a bonus
+					'''
+			}
+
+			NullGravityBeacon: {
+				DisplayName: Null Gravity Beacon
+				Tooltip:
+					'''
+					Removes gravity from players, NPCs, items and projectiles nearby
+					Momentum is kept. Flying enemies forget how to fly.
+					Liquids are unaffected. They were too complicated.
+					'''
+			}
+
+			RainInABottle: {
+				DisplayName: Rain in a Bottle
+				Tooltip:
+					'''
+					Place it to make it rain, everywhere, forever
+					Last beacon placed wins. Break it to let the weather be weather again.
+					'''
+			}
+
+			StormInABottle: {
+				DisplayName: Storm in a Bottle
+				Tooltip:
+					'''
+					Place it for a permanent thunderstorm
+					Last beacon placed wins. Break it to let the weather be weather again.
+					'''
+			}
+
+			BlizzardInABottle: {
+				DisplayName: Blizzard in a Bottle
+				Tooltip:
+					'''
+					Place it for permanent rain with howling wind (a blizzard in snow biomes)
+					Last beacon placed wins. Break it to let the weather be weather again.
+					'''
+			}
+
+			SunshineInABottle: {
+				DisplayName: Sunshine in a Bottle
+				Tooltip:
+					'''
+					Place it to banish rain, wind and sandstorms
+					Last beacon placed wins. Break it to let the weather be weather again.
+					'''
+			}
+
+			SandstormInABottle: {
+				DisplayName: Sandstorm in a Bottle
+				Tooltip:
+					'''
+					Place it for a permanent sandstorm
+					Last beacon placed wins. Break it to let the weather be weather again.
+					'''
+			}
+
+			JellyStormInABottle: {
+				DisplayName: Bouncing Jelly Storm in a Bottle
+				Tooltip:
+					'''
+					Place it: NPCs no longer deal contact damage and bounce off each other
+					Last beacon placed wins. Break it to stop the bouncing.
+					'''
+			}
+
+			FrogRainInABottle: {
+				DisplayName: Slippery Frog Rain in a Bottle
+				Tooltip:
+					'''
+					Place it: every block is ice, but twice as slippery, and the frogs come out
+					Last beacon placed wins. Break it to regain traction.
+					'''
+			}
+		}
+
+		Buffs: {
+			GlueDebuff: {
+				DisplayName: Glue
+				Description: You stick to anything you touch. There is no way to get unstuck. Fire helps.
+			}
+
+			ThreeDDebuff: {
+				DisplayName: 3D
+				Description: Everything is red and blue and slightly to the left
+			}
+
+			LifeLinkDebuff: {
+				DisplayName: Life Link
+				Description: Shares all damage taken with everything else that has this
+			}
+
+			CardboardBox: {
+				DisplayName: Cardboard Box
+				Description: Phasing through blocks. Fall damage is still real.
+			}
+
+			Winded: {
+				DisplayName: Winded
+				Description: Can't drink more air yet. Try not to drown.
+			}
+
+			Delirious: {
+				DisplayName: Delirious
+				Description: Something keeps switching places with you
+			}
+
+			PongBuff: {
+				DisplayName: Pong Power
+				Description: The paddles await your serve
+			}
+		}
+
+		NPCs: {
+			TinCan.DisplayName: Tin Can
+			SlipperyFrog.DisplayName: Slippery Frog
+
+			ZombieSalesman: {
+				DisplayName: Zombie Salesman
+				Pitch0: Have you considered a 3D TV?
+				Pitch1: Limited time offer!
+				Pitch2: Your icons look great by the way
+				Pitch3: Braaains... I mean, bundles!
+			}
+
+			ZombieIntern: {
+				DisplayName: Zombie Intern
+				Idle0: ...
+				Idle1: is this paid?
+				Idle2: *sips coffee*
+				Idle3: brb
+			}
+
+			ZombieCEO: {
+				DisplayName: Zombie CEO
+				Shout0: SYNERGY!
+				Shout1: CIRCLE BACK!
+				Shout2: QUARTERLY RESULTS!
+				Shout3: YOU'RE ALL FIRED!
+				Shout4: LET'S TAKE THIS OFFLINE!
+				Shout5: WHERE ARE MY BRAINS... I MEAN DELIVERABLES!
+			}
+		}
+
+		Projectiles: {
+			GooglyBullet.DisplayName: Googly Eye
+			YoureLongBullet.DisplayName: Stretchy Bullet
+			BuddyBullet.DisplayName: Buddy Bullet
+			ChaosSolutionSpray.DisplayName: Chaos Solution
+			GlueGlob.DisplayName: Glue Glob
+			CanExplosion.DisplayName: Can Explosion
+			RocketPackExplosion.DisplayName: GIGA Rocket Explosion
+			PongPaddle.DisplayName: Pong Paddle
+			RatBullet.DisplayName: Rat
+			PocketRat.DisplayName: Pocket Rat
+			GparrlingHookProjectile.DisplayName: Gparrling Hook
+			ToolGunBolt.DisplayName: Tool Gun Bolt
+			ThrownChunk.DisplayName: Thrown Chunk
+
+			PongBall: {
+				DisplayName: Pong Ball
+				Miss: MISS
+			}
+		}
+
+		Tiles: {
+			AlchemicalDehydratorTile.MapEntry: Alchemical Dehydrator
+			NullGravityBeaconTile.MapEntry: Null Gravity Beacon
+			WeatherBeaconTile.MapEntry: Weather Beacon
+		}
+
+		Bestiary: {
+			TinCan: A tin can. It is full of explosives. Nobody knows who filled it.
+			SlipperyFrog: Slides sideways forever. When something gets in its way it simply is somewhere else. Scientists are baffled.
+			ZombieSalesman: Rose from the grave to hit his quota. While he's around, every item icon in your inventory is a zombie. That's his pitch.
+			ZombieIntern: Sits around and does nothing. Technically part of the invasion. Nobody has told it what to do.
+			ZombieCEO: Tanky, loud, obnoxious, and gets stronger for every zombie on screen. Has never written a line of code.
+		}
+
+		Events: {
+			DeliriumStart: Silhouettes gather at the edge of your vision...
+			DeliriumEnd: The silhouettes fade. Was any of that real?
+			InvasionStart: The Corporate Zombie Invasion has begun! Check your inbox.
+			InvasionProgress: The corporate zombies are being downsized...
+			InvasionCEO: The Zombie CEO has left his office!
+			InvasionEnd: The Corporate Zombie Invasion has been defeated! The company has been dissolved.
+			CEODown: The Zombie CEO has been given a golden parachute (into the ground).
+			MoonShoesStart: Tonight is the Night of Moon Shoes! Everything is floaty.
+			MoonShoesEnd: The Moon Shoes come off. Gravity resumes.
+			Beacon0: A beacon makes it rain.
+			Beacon1: A beacon summons a storm.
+			Beacon2: A beacon calls the blizzard winds.
+			Beacon3: A beacon banishes the clouds.
+			Beacon4: A beacon whips up a sandstorm.
+			Beacon5: A beacon fills the air with jelly. Everything bounces.
+			Beacon6: A beacon makes it rain frogs. Watch your step.
+			BeaconRemoved: The weather beacon is gone. The weather is weather again.
+		}
+
+		DeathMessages.DrinkableLava: "{0} drank lava. What did they expect?"
+
+		Configs: {
+			ChaosConfig: {
+				DisplayName: Bag of Chaos
+
+				Headers: {
+					ScreenEffects: Screen Effects (accessibility)
+					Chaos: Chaos
+				}
+
+				Enable3DEffect: {
+					Label: Enable 3D debuff screen effect
+					Tooltip: Turn off if the red/blue split is too much. The debuff still exists, it just won't distort your screen.
+				}
+
+				ThreeDOffsetPixels: {
+					Label: 3D effect intensity (pixels)
+					Tooltip: How far the red and cyan images are shifted apart.
+				}
+
+				EnableTMFlashDarkness: {
+					Label: Enable TM Flash darkness
+					Tooltip: Turn off to keep the damage bonus without the vision restriction. Cheater.
+				}
+
+				TMFlashVisionTiles: {
+					Label: TM Flash vision radius (tiles)
+					Tooltip: How far you can see while TM Flash is active underground.
+				}
+
+				ZombieSalesmanReplacesIcons: {
+					Label: Zombie Salesman replaces item icons
+					Tooltip: While a Zombie Salesman is alive, all item icons in your UI become walking zombies.
+				}
+
+				FartAffectsPlayers: {
+					Label: Fart Reverb launches players
+					Tooltip: Whether the Fart Reverb.mp3 shockwave launches players (including the user) across the map.
+				}
+			}
+		}
+	}
+}

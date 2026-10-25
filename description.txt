@@ -1,1 +1,11 @@
-Modify this file with a description of your mod.
+Bag of Chaos: a Terraria mod that is not meant to be taken seriously.
+
+Weapons, tools, accessories, events and weather built from a loose pile of ideas:
+Fart Reverb.mp3, the Block Rod, the Sprite Slasher, the NPC Hand, the Credit Cannon, the Glue Gun,
+instant/unreasonable movement, the NPC Lawnmower, Drinkable Air (and Lava), the Alchemical Dehydrator,
+Sky in a Bottle, the 3D debuff, Null Gravity Beacons, Explosive Healing Kit, TM Flash, Chain Can,
+Weather Beacons, Slippery Frogs, the Gparrling Hook, Pong Power, Rocket and Driller Packs,
+Bottles of Zig and Zag, the Muncher armor set, Jelly Storms, the Night of Moon Shoes, Liquid/Solid/Venom Snake,
+the Tool Gun, Text Boxing Gloves, rat guns, stretchy bullets, Chaos Solution, Delirium, and the Corporate Zombie Invasion.
+
+Every sprite is placeholder programmer art. Pull requests with real pixel art are very welcome.
