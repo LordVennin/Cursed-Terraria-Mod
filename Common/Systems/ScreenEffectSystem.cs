@@ -20,6 +20,7 @@ namespace BagofChaos.Common.Systems
 	{
 		private static BlendState redOnly;
 		private static BlendState cyanOnly;
+		private static BlendState invert;
 
 		public override void Load() {
 			if (Main.dedServ)
@@ -38,12 +39,20 @@ namespace BagofChaos.Common.Systems
 				AlphaDestinationBlend = Blend.Zero,
 				ColorWriteChannels = ColorWriteChannels.Green | ColorWriteChannels.Blue,
 			};
+			// result = (1 - dest) * white: a full-screen colour inversion with a single white quad.
+			invert = new BlendState {
+				ColorSourceBlend = Blend.InverseDestinationColor,
+				ColorDestinationBlend = Blend.Zero,
+				AlphaSourceBlend = Blend.One,
+				AlphaDestinationBlend = Blend.Zero,
+			};
 		}
 
 		public override void Unload() {
 			redOnly?.Dispose();
 			cyanOnly?.Dispose();
-			redOnly = cyanOnly = null;
+			invert?.Dispose();
+			redOnly = cyanOnly = invert = null;
 		}
 
 		public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers) {
@@ -63,6 +72,9 @@ namespace BagofChaos.Common.Systems
 
 			if (config.Enable3DEffect && Main.LocalPlayer.HasBuff<ThreeDDebuff>())
 				DrawAnaglyph(config);
+
+			if (modPlayer.NTerraria)
+				DrawInversion();
 
 			return true;
 		}
@@ -105,6 +117,16 @@ namespace BagofChaos.Common.Systems
 			Main.spriteBatch.End();
 			Main.spriteBatch.Begin(SpriteSortMode.Deferred, cyanOnly, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Matrix.Identity);
 			Main.spriteBatch.Draw(Main.screenTarget, new Vector2(offset, 0f), Color.White);
+			Main.spriteBatch.End();
+			Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
+		}
+
+		// N-Terraria: every colour on screen, inverted. Cursed.
+		private static void DrawInversion() {
+			Texture2D pixel = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/Pixel").Value;
+			Main.spriteBatch.End();
+			Main.spriteBatch.Begin(SpriteSortMode.Deferred, invert, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, null, Matrix.Identity);
+			Main.spriteBatch.Draw(pixel, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.White);
 			Main.spriteBatch.End();
 			Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
 		}

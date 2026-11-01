@@ -32,7 +32,7 @@ namespace BagofChaos.Content.Projectiles
 			if (Main.netMode != NetmodeID.Server && local.active && !local.dead && local.Hitbox.Intersects(Projectile.Hitbox)) {
 				bool shooterGracePeriod = local.whoAmI == Projectile.owner && Projectile.timeLeft > 170;
 				if (!shooterGracePeriod) {
-					local.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 20);
+					local.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 5);
 					if (Projectile.owner == Main.myPlayer)
 						Projectile.Kill();
 					return;
@@ -41,7 +41,7 @@ namespace BagofChaos.Content.Projectiles
 		}
 
 		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
-			BagofChaos.SendApplyBuffToNPC(target, ModContent.BuffType<GlueDebuff>(), 60 * 20);
+			BagofChaos.SendApplyBuffToNPC(target, ModContent.BuffType<GlueDebuff>(), 60 * 5);
 		}
 
 		public override void OnKill(int timeLeft) {

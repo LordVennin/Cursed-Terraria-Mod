@@ -11,7 +11,7 @@ using Terraria.ModLoader;
 namespace BagofChaos
 {
 	// Bag of Chaos: a Terraria mod that is not meant to be taken seriously.
-	// Everything in here was built from two loose text files of ideas, with the blanks filled in by whatever seemed funniest.
+	// Everything in here was built from loose text files of ideas, with the blanks filled in by whatever seemed funniest.
 	public class BagofChaos : Mod
 	{
 		public const string AssetPath = $"{nameof(BagofChaos)}/Assets/";
@@ -20,14 +20,17 @@ namespace BagofChaos
 
 		internal enum MessageType : byte
 		{
-			MoveNPC,          // client -> server: physically relocate an NPC (NPC Hand, Gparrling Hook)
+			MoveNPC,          // client -> server: physically relocate an NPC (NPC Hand, Gparrling Hook, Succ)
 			KillNPC,          // client -> server: instantly kill an NPC (NPC Lawnmower)
-			SpawnNPC,         // client -> server: spawn an NPC at a position (Tool Gun duplication, Chain Can tin cans)
+			SpawnNPC,         // client -> server: spawn an NPC at a position (Tool Gun duplication, Chain Can tin cans, bottles)
+			SpawnBoss,        // client -> server: spawn a boss on a player (bottled enemies)
 			NPCVisual,        // client -> server -> clients: sync cosmetic NPC flags (googly eyes, slashed, stretched)
 			Fart,             // client -> server -> clients: the Fart Reverb shockwave
 			PlaceCloud,       // client -> server: Sky in a Bottle cloud platform
-			WeatherBeacon,    // client -> server: a weather beacon was placed or broken
+			WeatherBeacon,    // client -> server: a weather beacon was placed, toggled or broken
 			ApplyBuffToNPC,   // client -> server: apply a buff to an NPC (glue, life link) so the server-side logic sees it
+			Succ,             // client -> server -> clients: every player on screen gets pulled to the user
+			TetherPull,       // client -> server -> client: Team Tether pulls (and heals) a specific player
 		}
 
 		public override void HandlePacket(BinaryReader reader, int whoAmI) {
@@ -56,9 +59,17 @@ namespace BagofChaos
 					int type = reader.ReadInt32();
 					Vector2 position = reader.ReadVector2();
 					int lifeOverride = reader.ReadInt32();
+					Vector2 velocity = reader.ReadVector2();
 					if (Main.netMode == NetmodeID.Server) {
-						ChaosUtils.SpawnNPCDirect(type, position, lifeOverride);
+						ChaosUtils.SpawnNPCDirect(type, position, lifeOverride, velocity);
 					}
+					break;
+				}
+				case MessageType.SpawnBoss: {
+					int player = reader.ReadByte();
+					int type = reader.ReadInt32();
+					if (Main.netMode == NetmodeID.Server && !NPC.AnyNPCs(type))
+						NPC.SpawnOnPlayer(player, type);
 					break;
 				}
 				case MessageType.NPCVisual: {
@@ -123,6 +134,36 @@ namespace BagofChaos
 					}
 					break;
 				}
+				case MessageType.Succ: {
+					int sourcePlayer = reader.ReadByte();
+					Vector2 position = reader.ReadVector2();
+					if (Main.netMode == NetmodeID.Server) {
+						ModPacket packet = GetPacket();
+						packet.Write((byte)MessageType.Succ);
+						packet.Write((byte)sourcePlayer);
+						packet.WriteVector2(position);
+						packet.Send(-1, whoAmI);
+					}
+					else {
+						ChaosUtils.SuccLocalPlayer(sourcePlayer, position);
+					}
+					break;
+				}
+				case MessageType.TetherPull: {
+					int target = reader.ReadByte();
+					int source = reader.ReadByte();
+					if (Main.netMode == NetmodeID.Server) {
+						ModPacket packet = GetPacket();
+						packet.Write((byte)MessageType.TetherPull);
+						packet.Write((byte)target);
+						packet.Write((byte)source);
+						packet.Send(target);
+					}
+					else if (target == Main.myPlayer) {
+						ChaosUtils.TetherPullLocalPlayer(source);
+					}
+					break;
+				}
 				default:
 					Logger.WarnFormat("BagofChaos: Unknown Message type: {0}", msgType);
 					break;
@@ -152,17 +193,31 @@ namespace BagofChaos
 			}
 		}
 
-		internal static void SendSpawnNPC(int type, Vector2 position, int lifeOverride = -1) {
+		internal static void SendSpawnNPC(int type, Vector2 position, int lifeOverride = -1, Vector2 velocity = default) {
 			if (Main.netMode == NetmodeID.MultiplayerClient) {
 				ModPacket packet = Instance.GetPacket();
 				packet.Write((byte)MessageType.SpawnNPC);
 				packet.Write(type);
 				packet.WriteVector2(position);
 				packet.Write(lifeOverride);
+				packet.WriteVector2(velocity);
 				packet.Send();
 			}
 			else {
-				ChaosUtils.SpawnNPCDirect(type, position, lifeOverride);
+				ChaosUtils.SpawnNPCDirect(type, position, lifeOverride, velocity);
+			}
+		}
+
+		internal static void SendSpawnBoss(int player, int type) {
+			if (Main.netMode == NetmodeID.MultiplayerClient) {
+				ModPacket packet = Instance.GetPacket();
+				packet.Write((byte)MessageType.SpawnBoss);
+				packet.Write((byte)player);
+				packet.Write(type);
+				packet.Send();
+			}
+			else if (!NPC.AnyNPCs(type)) {
+				NPC.SpawnOnPlayer(player, type);
 			}
 		}
 
@@ -183,7 +238,6 @@ namespace BagofChaos
 				packet.WriteVector2(position);
 				packet.Write((byte)sourcePlayer);
 				packet.Send();
-				// The server will relay it back to us (and everyone else) so the shockwave hits every player exactly once.
 			}
 			else {
 				ChaosUtils.FartShockwave(position, sourcePlayer, affectNPCs: true, affectLocalPlayer: true);
@@ -232,6 +286,26 @@ namespace BagofChaos
 			packet.Write(buffType);
 			packet.Write(time);
 			packet.Send();
+		}
+
+		internal static void SendSucc(int sourcePlayer, Vector2 position) {
+			if (Main.netMode == NetmodeID.MultiplayerClient) {
+				ModPacket packet = Instance.GetPacket();
+				packet.Write((byte)MessageType.Succ);
+				packet.Write((byte)sourcePlayer);
+				packet.WriteVector2(position);
+				packet.Send();
+			}
+		}
+
+		internal static void SendTetherPull(int target, int source) {
+			if (Main.netMode == NetmodeID.MultiplayerClient) {
+				ModPacket packet = Instance.GetPacket();
+				packet.Write((byte)MessageType.TetherPull);
+				packet.Write((byte)target);
+				packet.Write((byte)source);
+				packet.Send();
+			}
 		}
 	}
 }

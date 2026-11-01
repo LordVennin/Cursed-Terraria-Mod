@@ -82,22 +82,13 @@ namespace BagofChaos.Content.Items.Accessories
 	// ----------------------------------------------------------------------------------------------------------------
 	public class SkyInABottle : ChaosAccessory
 	{
-		public override void UpdateAccessory(Player player, bool hideVisual) {
-			Chaos(player).SkyInABottle = true;
-			player.GetJumpState<SkyJump>().Enable(); // guarantees at least one cloud even with no other bottle
-		}
+		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).SkyInABottle = true;
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.CloudinaBottle).AddIngredient(ItemID.Cloud, 10).AddIngredient(ItemID.Bottle).AddTile(TileID.Anvils).Register();
 		}
 	}
 
-	public class SkyJump : ExtraJump
-	{
-		public override Position GetDefaultPosition() => new After(CloudInABottle);
-
-		public override float GetDurationMultiplier(Player player) => 0.01f; // ChaosPlayer sets it to 0 anyway
-	}
 
 	// ----------------------------------------------------------------------------------------------------------------
 	// Rocket Pack / Driller Pack: replace the dash

@@ -40,10 +40,22 @@ namespace BagofChaos.Content.Tiles
 
 		public override bool HasSmartInteract(int i, int j, Terraria.GameContent.ObjectInteractions.SmartInteractScanSettings settings) => true;
 
+		private static int holdTimer;
+
 		public override void MouseOver(int i, int j) {
 			Player player = Main.LocalPlayer;
 			player.noThrow = 2;
 			player.cursorItemIconEnabled = true;
+			// Hold right click to keep feeding it: one item every 8 frames after the first click.
+			if (Main.mouseRight && !Main.mouseRightRelease && !player.mouseInterface) {
+				if (++holdTimer >= 8) {
+					holdTimer = 0;
+					ProcessOne(i, j, quiet: true);
+				}
+			}
+			else {
+				holdTimer = -20;
+			}
 			if (DehydratorSystem.IsEligible(player.HeldItem.type)) {
 				player.cursorItemIconID = player.HeldItem.type;
 			}
@@ -53,11 +65,18 @@ namespace BagofChaos.Content.Tiles
 		}
 
 		public override bool RightClick(int i, int j) {
+			holdTimer = -20;
+			ProcessOne(i, j, quiet: false);
+			return true;
+		}
+
+		private static void ProcessOne(int i, int j, bool quiet) {
 			Player player = Main.LocalPlayer;
 			Item held = player.HeldItem;
 			if (held.IsAir || !DehydratorSystem.IsEligible(held.type)) {
-				Main.NewText(Language.GetTextValue("Mods.BagofChaos.Dehydrator.NotEligible"), new Color(200, 160, 255));
-				return true;
+				if (!quiet)
+					Main.NewText(Language.GetTextValue("Mods.BagofChaos.Dehydrator.NotEligible"), new Color(200, 160, 255));
+				return;
 			}
 			int amount = DehydratorSystem.IsRare(held.type) ? 6 + Main.rand.Next(0, 26) : 1;
 			int result = DehydratorSystem.RandomIngredient();
@@ -70,7 +89,6 @@ namespace BagofChaos.Content.Tiles
 				Dust dust = Dust.NewDustDirect(new Vector2(i * 16f - 16f, j * 16f - 8f), 48, 24, DustID.PurpleTorch, 0f, -1f);
 				dust.noGravity = true;
 			}
-			return true;
 		}
 	}
 

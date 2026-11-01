@@ -34,6 +34,14 @@ namespace BagofChaos.Common.GlobalNPCs
 		// --- delirium silhouette ---
 		public bool Silhouette;
 
+		// --- Snail Flail: 1 = snails, 2 = magma snails ---
+		public int SnailMark;
+
+		// --- Gravity Flail slam ---
+		public bool Slamming;
+		public float SlamStartY;
+		public int SlamOwner;
+
 		// --- pupils for the googly eyes ---
 		private Vector2 pupilA;
 		private Vector2 pupilB;
@@ -49,12 +57,6 @@ namespace BagofChaos.Common.GlobalNPCs
 			Tall = (flags & 16) != 0;
 		}
 
-		public override void OnSpawn(NPC npc, IEntitySource source) {
-			if (Main.netMode != NetmodeID.MultiplayerClient && ChaosEvents.DeliriumActive && ChaosUtils.IsHostile(npc) && !npc.boss && npc.ModNPC == null) {
-				Silhouette = true;
-				npc.netUpdate = true;
-			}
-		}
 
 		// Silhouettes need to reach new clients too; piggyback on the NPC sync.
 		public override void SendExtraAI(NPC npc, BitWriter bitWriter, System.IO.BinaryWriter binaryWriter) {
@@ -78,6 +80,7 @@ namespace BagofChaos.Common.GlobalNPCs
 
 		public override void PostAI(NPC npc) {
 			UpdateGlue(npc);
+			UpdateSlam(npc);
 
 			if (ChaosEvents.JellyStormActive)
 				UpdateJellyBounce(npc);
@@ -95,9 +98,14 @@ namespace BagofChaos.Common.GlobalNPCs
 		private void UpdateGlue(NPC npc) {
 			bool hasGlue = npc.HasBuff<GlueDebuff>();
 
+			// Glue brings Life Link along with it (8 seconds), and loses it again when the glue goes.
+			if (hasGlue && !npc.HasBuff<LifeLinkDebuff>() && Main.netMode != NetmodeID.MultiplayerClient)
+				npc.AddBuff(ModContent.BuffType<LifeLinkDebuff>(), 60 * 8);
+
 			// Fire burns the glue away (and whatever was stuck to it comes loose, screaming).
 			if (hasGlue && IsOnFire(npc)) {
 				npc.RequestBuffRemoval(ModContent.BuffType<GlueDebuff>());
+				npc.RequestBuffRemoval(ModContent.BuffType<LifeLinkDebuff>());
 				DetachEverythingFrom(npc);
 				if (GlueBurnCooldown == 0 && Main.netMode != NetmodeID.MultiplayerClient) {
 					GlueBurnCooldown = 120; // prevents fire/glue damage loops
@@ -165,6 +173,38 @@ namespace BagofChaos.Common.GlobalNPCs
 				|| npc.HasBuff(BuffID.Burning) || npc.lavaWet;
 		}
 
+		// Gravity Flail: slammed enemies take uncapped fall damage when they land.
+		private void UpdateSlam(NPC npc) {
+			if (!Slamming)
+				return;
+			if (npc.velocity.Y > 0f) {
+				npc.velocity.Y = System.Math.Max(npc.velocity.Y, 30f);
+				npc.noGravity = false;
+				return;
+			}
+			// Landed (or stopped): damage by distance fallen.
+			Slamming = false;
+			float fallenTiles = (npc.position.Y - SlamStartY) / 16f;
+			if (fallenTiles > 1f && Main.netMode != NetmodeID.MultiplayerClient) {
+				int damage = (int)(fallenTiles * 12f);
+				npc.SimpleStrikeNPC(damage, 0, false, 0f, DamageClass.Melee, false, 0f, noPlayerInteraction: true);
+				if (Main.netMode != NetmodeID.Server)
+					Terraria.Audio.SoundEngine.PlaySound(SoundID.Item70, npc.Center);
+			}
+		}
+
+		// Snail Flail / Loot Scanner / Doppleganger-free loot rules.
+		public override bool PreKill(NPC npc) {
+			if (SnailMark > 0 && Main.netMode != NetmodeID.MultiplayerClient) {
+				int snail = SnailMark == 2 ? NPCID.MagmaSnail : NPCID.Snail;
+				int count = Main.rand.Next(1, 4);
+				for (int i = 0; i < count; i++)
+					ChaosUtils.SpawnNPCDirect(snail, npc.Center + new Vector2(Main.rand.NextFloat(-10f, 10f), 0f));
+				return false; // no normal loot: it is snails now
+			}
+			return true;
+		}
+
 		// ------------------------------------------------------------------------------------------------------------
 		// Bouncing Jelly Storm: no contact damage, everybody bounces off everybody.
 		// ------------------------------------------------------------------------------------------------------------
@@ -188,6 +228,8 @@ namespace BagofChaos.Common.GlobalNPCs
 
 		public override bool CanHitPlayer(NPC npc, Player target, ref int cooldownSlot) {
 			if (ChaosEvents.JellyStormActive)
+				return false;
+			if (target.GetModPlayer<ChaosPlayer>().Stalemate)
 				return false;
 			return true;
 		}
@@ -231,7 +273,7 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override void EditSpawnRate(Player player, ref int spawnRate, ref int maxSpawns) {
-			if ((ChaosEvents.DeliriumActive || ChaosEvents.InvasionActive) && ChaosEvents.NearSpawn(player)) {
+			if (ChaosEvents.InvasionActive && ChaosEvents.NearSpawn(player)) {
 				spawnRate = System.Math.Max(1, spawnRate / 4);
 				maxSpawns *= 2;
 			}
@@ -240,25 +282,58 @@ namespace BagofChaos.Common.GlobalNPCs
 		public override void OnKill(NPC npc) {
 			if (ChaosEvents.InvasionActive && npc.ModNPC is CorporateZombie)
 				ChaosEvents.RegisterInvasionKill(npc);
-			if (ChaosEvents.DeliriumActive && Silhouette)
-				ChaosEvents.RegisterDeliriumKill();
+			// Loot Scanner: whip-tagged enemies drop their loot twice.
+			if (Main.netMode != NetmodeID.MultiplayerClient && npc.lastInteraction >= 0 && npc.lastInteraction < Main.maxPlayers && Main.player[npc.lastInteraction].GetModPlayer<ChaosPlayer>().LootScanner && HasWhipTag(npc))
+				npc.NPCLoot();
 		}
 
-		// Every zombie, vanilla or otherwise, now sells 3D TVs with its teeth.
+		private static bool HasWhipTag(NPC npc) {
+			for (int i = 0; i < NPC.maxBuffs; i++) {
+				if (npc.buffType[i] > 0 && npc.buffTime[i] > 0 && BuffID.Sets.IsATagBuff[npc.buffType[i]])
+					return true;
+			}
+			return false;
+		}
+
+		// Life Link: 25% less damage taken.
+		public override void ModifyIncomingHit(NPC npc, ref NPC.HitModifiers modifiers) {
+			if (npc.HasBuff<LifeLinkDebuff>())
+				modifiers.FinalDamage *= 0.75f;
+		}
+
+		// Every zombie, vanilla or otherwise, now sells 3D TVs with its teeth. The Eye of Cthulhu wants your undivided attention.
 		public override void OnHitPlayer(NPC npc, Player target, Player.HurtInfo hurtInfo) {
 			if (NPCID.Sets.Zombies[npc.type] || npc.ModNPC is CorporateZombie)
 				target.AddBuff(ModContent.BuffType<ThreeDDebuff>(), 60 * 12);
+			if (npc.type == NPCID.EyeofCthulhu)
+				target.AddBuff(ModContent.BuffType<EyeOnMe>(), 60 * 8);
+		}
+
+		// Stalemate: enemies can't hurt you, you can't hurt them.
+		public override bool? CanBeHitByItem(NPC npc, Player player, Item item) => player.GetModPlayer<ChaosPlayer>().Stalemate ? false : null;
+
+		public override void ModifyNPCLoot(NPC npc, NPCLoot npcLoot) {
+			if (npc.type == NPCID.Guide)
+				npcLoot.Add(Terraria.GameContent.ItemDropRules.ItemDropRule.Common(ModContent.ItemType<Content.Items.Tools.GuidesGuidebookOfGuiding>(), 2));
+			if (npc.type == NPCID.PartyGirl)
+				npcLoot.Add(Terraria.GameContent.ItemDropRules.ItemDropRule.ByCondition(new Terraria.GameContent.ItemDropRules.Conditions.IsHardmode(), ModContent.ItemType<Content.Items.Weapons.BallsOfConfetti>(), 1, 3, 6));
+			if (npc.type == NPCID.Shark)
+				npcLoot.Add(Terraria.GameContent.ItemDropRules.ItemDropRule.Common(ModContent.ItemType<Content.Items.Mounts.Sharkboard>(), 20));
+			if (ChaosUtils.IsHostile(npc))
+				npcLoot.Add(Terraria.GameContent.ItemDropRules.ItemDropRule.ByCondition(new Terraria.GameContent.ItemDropRules.Conditions.IsHardmode(), ModContent.ItemType<Content.Items.Tools.GentlemenStack>(), 200));
 		}
 
 		// ------------------------------------------------------------------------------------------------------------
 		// Drawing: silhouettes, slashed sprites, stretched sprites, googly eyes.
 		// ------------------------------------------------------------------------------------------------------------
 		public override void DrawEffects(NPC npc, ref Color drawColor) {
-			if (Silhouette)
+			if (Silhouette || ChaosEvents.IsSilhouette(npc))
 				drawColor = new Color(10, 5, 20, drawColor.A);
 		}
 
 		public override bool PreDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			if (npc.HasBuff<GlueDebuff>())
+				ChaosUtils.DrawOutline(npc, spriteBatch, screenPos, Color.White);
 			if (!Slashed && !Stretched && !Tall)
 				return true;
 			if (npc.ModNPC != null && npc.ModNPC.Mod != Mod)

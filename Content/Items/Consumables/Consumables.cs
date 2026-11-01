@@ -126,8 +126,15 @@ namespace BagofChaos.Content.Items.Consumables
 			base.SetDefaults();
 			Item.rare = ItemRarityID.Green;
 			Item.buffType = ModContent.BuffType<Weedy>();
-			Item.buffTime = 60 * 60;
+			Item.buffTime = 60 * 60 * 10;
 			Item.value = Item.buyPrice(silver: 30);
+		}
+
+		public override bool? UseItem(Player player) {
+			// Each beer on top of the last adds another tier of distortion (up to 5).
+			var chaos = player.GetModPlayer<Common.Players.ChaosPlayer>();
+			chaos.WeedyTier = player.HasBuff<Weedy>() ? System.Math.Min(5, chaos.WeedyTier + 1) : 1;
+			return true;
 		}
 
 		public override void AddRecipes() {
@@ -155,7 +162,7 @@ namespace BagofChaos.Content.Items.Consumables
 			Item.UseSound = SoundID.Item2;
 		}
 
-		public override bool CanUseItem(Player player) => !ChaosEvents.DeliriumActive;
+		public override bool CanUseItem(Player player) => !ChaosEvents.DeliriumActive && !Main.dayTime;
 
 		public override bool? UseItem(Player player) {
 			if (Main.netMode != NetmodeID.MultiplayerClient)

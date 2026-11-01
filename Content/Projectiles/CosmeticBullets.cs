@@ -68,7 +68,7 @@ namespace BagofChaos.Content.Projectiles
 	public class BuddyBullet : SimpleBullet
 	{
 		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
-			BagofChaos.SendApplyBuffToNPC(target, ModContent.BuffType<LifeLinkDebuff>(), 60 * 30);
+			BagofChaos.SendApplyBuffToNPC(target, ModContent.BuffType<LifeLinkDebuff>(), 60 * 8);
 		}
 	}
 }

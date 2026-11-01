@@ -11,8 +11,10 @@ namespace BagofChaos.Content.NPCs
 	// A critter that slides left and right across the screen and teleports up or down a block whenever it hits something.
 	public class SlipperyFrog : ModNPC
 	{
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Frog;
+
 		public override void SetStaticDefaults() {
-			Main.npcFrameCount[Type] = 4;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.Frog];
 			Main.npcCatchable[Type] = true;
 			NPCID.Sets.CountsAsCritter[Type] = true;
 			NPCID.Sets.TakesDamageFromHostilesWithoutBeingFriendly[Type] = true;
@@ -21,8 +23,8 @@ namespace BagofChaos.Content.NPCs
 		}
 
 		public override void SetDefaults() {
-			NPC.width = 20;
-			NPC.height = 14;
+			NPC.width = 12;
+			NPC.height = 10;
 			NPC.damage = 0;
 			NPC.defense = 0;
 			NPC.lifeMax = 5;
@@ -32,6 +34,10 @@ namespace BagofChaos.Content.NPCs
 			NPC.aiStyle = -1;
 			NPC.catchItem = ModContent.ItemType<Items.Consumables.SlipperyFrogItem>();
 			NPC.npcSlots = 0.3f;
+		}
+
+		public override void ModifyNPCLoot(NPCLoot npcLoot) {
+			npcLoot.Add(Terraria.GameContent.ItemDropRules.ItemDropRule.Common(ModContent.ItemType<Items.Accessories.SlipperyFrogShoes>(), 50)); // 2%
 		}
 
 		public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry) {
@@ -97,7 +103,7 @@ namespace BagofChaos.Content.NPCs
 
 		public override void FindFrame(int frameHeight) {
 			NPC.frameCounter++;
-			NPC.frame.Y = ((int)(NPC.frameCounter / 6) % 4) * frameHeight;
+			NPC.frame.Y = ((int)(NPC.frameCounter / 6) % Main.npcFrameCount[Type]) * frameHeight;
 		}
 
 		public override void HitEffect(NPC.HitInfo hit) {

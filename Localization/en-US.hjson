@@ -52,9 +52,8 @@ Mods: {
 				DisplayName: Glue Gun
 				Tooltip:
 					'''
-					Like a paint sprayer, but glue
-					Anything glued sticks to anything it touches. Anything.
-					Fire burns the glue away. Eventually.
+					Like a paint sprayer, but glue. Glued things stick to what they touch for 5 seconds.
+					Glued enemies also get Life Link and a white outline. Fire burns it all away.
 					'''
 			}
 
@@ -121,8 +120,8 @@ Mods: {
 				Tooltip:
 					'''
 					Deals 1 damage
-					Knockback is measured in screens
-					Affects enemies, town folk, other players, and you
+					Knockback is measured in screens. For everyone but you: you get about three tiles.
+					Affects enemies, town folk and other players
 					'''
 			}
 
@@ -258,9 +257,8 @@ Mods: {
 				DisplayName: Sky in a Bottle
 				Tooltip:
 					'''
-					Replaces every double jump with a temporary cloud platform under your feet
+					A cloud platform appears under your feet whenever a jump reaches its maximum height
 					Everyone can stand on it. It fades after a few seconds no matter what.
-					Extra jump charges mean extra clouds. Build a staircase. Regret it.
 					'''
 			}
 
@@ -423,7 +421,7 @@ Mods: {
 				Tooltip:
 					'''
 					Every NPC, player and enemy gets an upside-down reflection right under your feet
-					Lasts a minute. Do not operate heavy machinery. Or light machinery.
+					Lasts ten minutes. Drink more to stack the distortion, up to five tiers.
 					'''
 			}
 
@@ -449,10 +447,9 @@ Mods: {
 				DisplayName: Delirium Pills
 				Tooltip:
 					'''
-					Summons the Delirium
-					Silhouettes of enemies attack spawn and randomly switch places with you
-					Defeat 100 of them to make it stop
-					Do not operate heavy machinery
+					Starts the Delirium Moon tonight (night only)
+					Every enemy becomes a silhouette and one swaps places with you every 10-15 seconds
+					Also happens on its own on one new moon in three
 					'''
 			}
 
@@ -461,7 +458,7 @@ Mods: {
 				Tooltip:
 					'''
 					Summons the Corporate Zombie Invasion (night only, they clock out at dawn)
-					Lay off 100 zombies to end it. All zombies now sell 3D TVs on contact.
+					Lay off 50 zombies to end it. All zombies now sell 3D TVs on contact.
 					We regret to inform you that your position has been eliminated
 					'''
 			}
@@ -486,7 +483,7 @@ Mods: {
 				Tooltip:
 					'''
 					Works like an Extractinator: hold a critter, fish or plant and right click the machine
-					Dehydrates it into a random potion ingredient
+					Hold right click to process a whole stack quickly
 					Gold critters, dye plants and quest fish yield 6 to 31 ingredients
 					'''
 			}
@@ -541,7 +538,7 @@ Mods: {
 				Tooltip:
 					'''
 					Place it: it rains, NPCs deal no contact damage, and players, NPCs and enemies all bounce off each other. Hard.
-					Last beacon placed wins. Break it to stop the bouncing.
+					Right click the beacon to toggle it.
 					'''
 			}
 
@@ -549,8 +546,740 @@ Mods: {
 				DisplayName: Slippery Frog Rain in a Bottle
 				Tooltip:
 					'''
-					Place it: it rains, every block is ice, four times as slippery, and the frogs come out
-					Last beacon placed wins. Break it to regain traction.
+					Place it: it rains, every block is ice (no slowing down) and you run twice as fast on them
+					The frogs come out. Right click the beacon to toggle it.
+					'''
+			}
+			SpiderOnABallItem: {
+				DisplayName: Spider on a Ball
+				Tooltip:
+					'''
+					Summons a spinning spider on top of a spinning ball
+					It doesn't make sense. Shimmer the Balls of Spiders to get it.
+					'''
+			}
+
+			HollowBlock: {
+				DisplayName: Hollow Block
+				Tooltip:
+					'''
+					Solid for everything except players
+					Walk right through. Watch the zombies not.
+					'''
+			}
+
+			BlueCoreBlock: {
+				DisplayName: Blue Core Block
+				Tooltip:
+					'''
+					Solid for everything except enemies
+					Keep your town NPCs in. Let the zombies... hm.
+					'''
+			}
+
+			ModelDemonAltar: {
+				DisplayName: Model Demon Altar
+				Tooltip:
+					'''
+					Crafts everything a Demon Altar can
+					Glows blue, mines like a normal tile, spawns no ores. A replica.
+					'''
+			}
+
+			ChaoticDehydrator: {
+				DisplayName: Chaotic Dehydrator
+				Tooltip:
+					'''
+					Works like an Extractinator for literally any item
+					Put anything in. Get anything out. Hold right click to feed it fast.
+					'''
+			}
+
+			TriforceOfWisdom: {
+				DisplayName: Triforce of Wisdom
+				Tooltip:
+					'''
+					Melee and ranged damage count as magic damage
+					-10% damage
+					'''
+			}
+
+			TriforceOfPower: {
+				DisplayName: Triforce of Power
+				Tooltip:
+					'''
+					Magic and ranged damage count as melee damage
+					-10% damage
+					'''
+			}
+
+			TriforceOfCourage: {
+				DisplayName: Triforce of Courage
+				Tooltip:
+					'''
+					Melee and magic damage count as ranged damage
+					-10% damage
+					'''
+			}
+
+			CompleteTriforceOfHyrule: {
+				ModeMagic: The Triforce glows blue. Everything is magic now.
+				ModeMelee: The Triforce glows red. Everything is melee now.
+				ModeRanged: The Triforce glows green. Everything is ranged now.
+				ModeSummon: The Triforce glows yellow. Everything is summon now.
+				DisplayName: Complete Triforce of Hyrule
+				Tooltip:
+					'''
+					All vanilla damage bonuses apply to all vanilla damage types
+					Right click to choose what everything converts into (Blue: Magic, Red: Melee, Green: Ranged, Yellow: Summoner)
+					-10% damage. The legend says nothing about balance.
+					'''
+			}
+
+			Stalemate: {
+				DisplayName: Stalemate
+				Tooltip:
+					'''
+					You can't hurt enemies and they can't hurt you
+					You can't heal or regenerate either. Debuffs, traps and lava still count.
+					Nobody wins. That's the point.
+					'''
+			}
+
+			LootScanner: {
+				DisplayName: Loot Scanner
+				Tooltip: Enemies tagged by whips drop their loot twice
+			}
+
+			TouchGrass: {
+				DisplayName: Touch Grass
+				Tooltip:
+					'''
+					+5 life regen while standing on grass
+					Regular, corrupt or crimson grass only. Hallowed grass is too fancy.
+					'''
+			}
+
+			SlipperyFrogShoes: {
+				DisplayName: Slippery Frog Shoes
+				Tooltip:
+					'''
+					You can no longer move up or down
+					Gravity doesn't apply to you. Walk on air. Forever at this height.
+					'''
+			}
+
+			NTerraria: {
+				DisplayName: N-Terraria
+				Tooltip:
+					'''
+					Inverts every colour on screen
+					Cursed. Cosmetic. Cursed.
+					'''
+			}
+
+			UnstableConcoction: {
+				RolledDamage: Unstable: +50% damage!
+				RolledSpeed: Unstable: +50% weapon attack speed!
+				DisplayName: Unstable Concoction
+				Tooltip:
+					'''
+					Potions no longer heal you
+					While potion sick: you can't die, your HP can't drop below 1, and you randomly get +50% damage or +50% weapon attack speed
+					When potion sickness ends you explode for 60 magic damage and die instantly
+					Science!
+					'''
+			}
+
+			TeamTether: {
+				DisplayName: Team Tether
+				Tooltip:
+					'''
+					You can't grapple manually anymore
+					Automatically hooks a nearby ally under 25% HP, pulls them to you and heals them for 25% of their max HP
+					Players holding their own tether can be pulled but not healed. 60 second cooldown per target.
+					'''
+			}
+
+			BallsOfSpiders: {
+				DisplayName: Balls of Spiders
+				Tooltip:
+					'''
+					Wings with the stats of Leaf Wings
+					Constantly drops spiders while flying. Cling to walls by pushing into them.
+					Shimmer it into a Spider on a Ball.
+					'''
+			}
+
+			BallOfSpiders: {
+				DisplayName: Ball of Spiders
+				Tooltip:
+					'''
+					Permanent: cobwebs no longer affect you
+					Eat it. Shimmer it into Balls of Spiders instead if you must.
+					'''
+			}
+
+			BallOfConfetti: {
+				DisplayName: Ball of Confetti
+				Tooltip:
+					'''
+					Permanent: you explode into confetti when you take damage
+					Shimmer it into Balls of Confetti.
+					'''
+			}
+
+			BallOfGlue: {
+				DisplayName: Ball of Glue
+				Tooltip:
+					'''
+					Permanent: removes the Ball of Confetti buff
+					Eat another Ball of Confetti to get it back.
+					'''
+			}
+
+			PullTheLeverKronk: {
+				Used: WRONG LEVEEEER
+				DisplayName: Pull the Lever, Kronk!
+				Tooltip:
+					'''
+					Creates an instant hellevator under your feet
+					Wrong lever!
+					'''
+			}
+
+			CrushedGlassPotion: {
+				DisplayName: Crushed Glass Potion
+				Tooltip:
+					'''
+					All glass and sand related blocks are invisible to you
+					15 minute duration
+					'''
+			}
+
+			CrushedDirtPotion: {
+				DisplayName: Crushed Dirt Potion
+				Tooltip:
+					'''
+					Dirt blocks glow unreasonably bright
+					5 minute duration
+					'''
+			}
+
+			CompressedLifeCrystal: {
+				DisplayName: Compressed Life Crystal
+				Tooltip:
+					'''
+					Maxes out your red hearts
+					Once your base HP is 400 or more it acts as an infinite Lesser Healing Potion
+					'''
+			}
+
+			CompressedManaCrystal: {
+				DisplayName: Compressed Mana Crystal
+				Tooltip:
+					'''
+					Maxes out your mana stars
+					Once your base mana is 200 or more it acts as an infinite Lesser Mana Potion
+					'''
+			}
+
+			CompressedLifeFruit: {
+				DisplayName: Compressed Life Fruit
+				Tooltip:
+					'''
+					Maxes out your red and golden hearts
+					Once your base HP is 500 or more it acts as an infinite Greater Healing Potion
+					'''
+			}
+
+			RatPackageCo: {
+				DisplayName: Rat Package Co.
+				Tooltip:
+					'''
+					Permanent: expands your inventory down by one row
+					The rats deliver. The rats always deliver.
+					'''
+			}
+
+			BottledPrehardmode: {
+				DisplayName: Bottled Prehardmode
+				Tooltip:
+					'''
+					Throw it to release 10 random pre-hardmode enemies
+					0.1% chance to release a pre-hardmode boss you've already beaten
+					'''
+			}
+
+			BottledHardmode: {
+				DisplayName: Bottled Hardmode
+				Tooltip:
+					'''
+					Throw it to release 10 random hardmode enemies
+					0.1% chance to release a hardmode boss you've already beaten
+					'''
+			}
+
+			BiomedBottledPrehardmode: {
+				DisplayName: Biome'd Bottled Prehardmode
+				Tooltip:
+					'''
+					Throw it to release 10 random pre-hardmode enemies from the biome you're in
+					0.1% chance to release a pre-hardmode boss you've already beaten
+					'''
+			}
+
+			BiomedBottledHardmode: {
+				DisplayName: Biome'd Bottled Hardmode
+				Tooltip:
+					'''
+					Throw it to release 10 random hardmode enemies from the biome you're in
+					0.1% chance to release a hardmode boss you've already beaten
+					'''
+			}
+
+			ChaoticGel: {
+				DisplayName: Chaotic Gel
+				Tooltip:
+					'''
+					Summons the Chaotic Slime
+					Hardmode only
+					'''
+			}
+
+			SlotMachineToken: {
+				DisplayName: Slot Machine Token
+				Tooltip:
+					'''
+					Summons the Slot-bar Caterpillar
+					Hardmode only. Keep an eye on your bottom row.
+					'''
+			}
+
+			BonePile: {
+				DisplayName: Bone Pile
+				Tooltip:
+					'''
+					Summons the Bonemass of Skeletron
+					Night only. It also shows up on its own one time in four when Skeletron is cursed.
+					'''
+			}
+
+			CaterpillarBag: {
+				DisplayName: Treasure Bag (Slot-bar Caterpillar)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+			}
+
+			ChaoticSlimeBag: {
+				DisplayName: Treasure Bag (Chaotic Slime)
+				Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+			}
+
+			HarpyWings: {
+				DisplayName: "\"Harpy\" Wings"
+				Tooltip:
+					'''
+					Summons a harpy that sits behind your head
+					Hold jump in the air to glide as if you had wings. You don't. She does.
+					'''
+			}
+
+			RatCart: {
+				DisplayName: Rat Cart
+				Tooltip:
+					'''
+					Summons a rideable rat minecart
+					Squeaks occasionally. Faster underground.
+					'''
+			}
+
+			Sharkboard: {
+				DisplayName: Sharkboard
+				Tooltip:
+					'''
+					Summons a rideable shark
+					Breathe underwater and move much faster in it. Drops from sharks, who are not happy about it.
+					'''
+			}
+
+			GuidesGuidebookOfGuiding: {
+				DisplayName: Guide's Guidebook of Guiding
+				Tooltip:
+					'''
+					Right click to talk to the Guide from anywhere
+					Right click again to close. Requires a living Guide, which is on you.
+					'''
+			}
+
+			ShopkeepersPortableShopOfKeeping: {
+				DisplayName: Shopkeeper's Portable Shop of Keeping
+				Tooltip:
+					'''
+					Right click to open a sell-only shop from anywhere
+					Right click again to close. Nothing to buy. Everything to sell.
+					'''
+			}
+
+			GoblinYourMoney: {
+				DisplayName: Goblin' Your Money
+				Tooltip:
+					'''
+					Right click to open the Goblin Tinkerer's reforge menu from anywhere
+					Right click again to close
+					'''
+			}
+
+			SnippingTool: {
+				DisplayName: Snipping Tool
+				Tooltip:
+					'''
+					Right click to open the Stylist's hair menu from anywhere
+					Right click again to close
+					'''
+			}
+
+			AnglersPocketguide: {
+				DisplayName: Angler's Pocketguide
+				Tooltip:
+					'''
+					Right click to check the Angler's fishing quest from anywhere
+					Right click again to close
+					'''
+			}
+
+			NPCDirectory: {
+				DisplayName: NPC Directory
+				Tooltip:
+					'''
+					Right click to open a list of every town NPC living in your world
+					Pick one to talk to them from wherever you are
+					'''
+			}
+
+			GentlemenStack: {
+				DisplayName: Gentlemen, Stack.
+				Tooltip:
+					'''
+					All items in your inventory stack to at least 99 while you carry this
+					Items that already stack higher are unaffected
+					'''
+			}
+
+			ChaoticQuiver: {
+				DisplayName: Chaotic Quiver
+				Tooltip:
+					'''
+					Bows randomly fire any arrow you carry
+					+1 base arrow damage per distinct arrow type when carrying 2 or more
+					'''
+			}
+
+			ChaoticAmmoBox: {
+				DisplayName: Chaotic Ammo Box
+				Tooltip:
+					'''
+					Guns randomly fire any bullet you carry
+					+1 base bullet damage per distinct bullet type when carrying 2 or more
+					'''
+			}
+
+			ChaoticAmmunitionRoulette: {
+				DisplayName: Chaotic Ammunition Roulette
+				Tooltip:
+					'''
+					Bows and guns randomly fire any arrow OR bullet you carry
+					+1 base damage per distinct ammo type across both categories
+					'''
+			}
+
+			ChaoticDashBox: {
+				DisplayName: Chaotic Dash Box
+				Tooltip:
+					'''
+					Dashes have no cooldown and chain twice
+					But they go in a random direction. Chained dashes follow the first.
+					'''
+			}
+
+			ChaoticBanker: {
+				DisplayName: Chaotic Banker
+				Tooltip:
+					'''
+					Passive tools work from inside your Piggy Bank and Safe
+					Guide to Critter Companionship, Cell Phone, chaotic ammo tools, and so on
+					'''
+			}
+
+			RubberBandingBanditMask: {
+				DisplayName: Rubber Banding Bandit Mask
+				Tooltip:
+					'''
+					15% increased ranged damage and 10% increased ranged attack speed
+					10% chance not to consume ammo
+					'''
+			}
+
+			RubberBandingBanditBandana: {
+				DisplayName: Rubber Banding Bandit Bandana
+				Tooltip:
+					'''
+					15% increased magic damage and 12% reduced mana cost
+					Your projectiles bounce off allies in the direction they are facing
+					'''
+			}
+
+			RubberBandingBanditGoggles: {
+				DisplayName: Rubber Banding Bandit Goggles
+				Tooltip:
+					'''
+					15% increased summon damage and +2 minion slots
+					You can grapple onto your minions
+					'''
+			}
+
+			RubberBandingBanditWarpaint: {
+				DisplayName: Rubber Banding Bandit Warpaint
+				Tooltip:
+					'''
+					15% increased melee damage and 10% increased melee attack speed
+					Taking damage from a projectile gives you a massive burst of movement speed
+					'''
+			}
+
+			RubberBandingBanditSuit: {
+				SetBonus: All your projectiles have a 50% chance to bounce off tiles, +1 bounce for weapon projectiles
+				DisplayName: Rubber Banding Bandit Suit
+				Tooltip:
+					'''
+					8% increased damage
+					10% chance for ANY projectile to bounce off you
+					'''
+			}
+
+			RubberBandingBanditShoes: {
+				DisplayName: Rubber Banding Bandit Shoes
+				Tooltip:
+					'''
+					6% increased damage and 15% increased movement speed
+					You bounce uncontrollably off tiles and enemies
+					'''
+			}
+
+			ChaoticSwordBox: {
+				DisplayName: Chaotic Sword Box
+				Tooltip:
+					'''
+					Attacking randomly swings a sword from your hotbar
+					+10 base melee damage
+					'''
+			}
+
+			ChaoticRangerBox: {
+				DisplayName: Chaotic Ranger Box
+				Tooltip:
+					'''
+					Attacking randomly fires a ranged weapon from your hotbar
+					+10 base ranged damage
+					'''
+			}
+
+			ChaoticMagicBox: {
+				DisplayName: Chaotic Magic Box
+				Tooltip:
+					'''
+					Attacking randomly casts a magic weapon from your hotbar
+					+10 base magic damage
+					'''
+			}
+
+			ChaoticWhipBox: {
+				DisplayName: Chaotic Whip Box
+				Tooltip:
+					'''
+					Attacking randomly cracks a whip from your hotbar
+					+10 base summon damage
+					'''
+			}
+
+			SlotterPillar: {
+				DisplayName: Slotter Pillar
+				Tooltip:
+					'''
+					Your inventory slots become minions, but only while your inventory is open
+					Random slots dash at enemies and return. Closing the inventory recalls them all.
+					'''
+			}
+
+			TanningMirror: {
+				DisplayName: Tanning Mirror
+				Tooltip:
+					'''
+					Hold it to shine a 75 degree cone of light above you
+					Enemies in the cone are tagged once a second; tagged enemies take extra minion damage
+					Your minions are kept inside the cone, move faster, and bounce off its edges and each other
+					'''
+			}
+
+			NailAndHammer: {
+				DisplayName: Nail and Hammer
+				Tooltip:
+					'''
+					Left click to throw nails that apply the Nails debuff
+					Right click to slam down a hammer that deals triple damage to nailed enemies
+					'''
+			}
+
+			SnailFlail: {
+				DisplayName: Snail Flail
+				Tooltip:
+					'''
+					Killing blows turn enemies into snails
+					Their loot is replaced with snails. Just snails.
+					'''
+			}
+
+			HotSnailFlail: {
+				DisplayName: Hot Snail Flail
+				Tooltip:
+					'''
+					Killing blows turn enemies into magma snails
+					Their loot is replaced with magma snails. Sets things on fire.
+					'''
+			}
+
+			BallsOfConfetti: {
+				DisplayName: Balls of Confetti
+				Tooltip:
+					'''
+					Light disc that does 1 damage, pierces infinitely, ignores immunity frames and defense
+					Stacks to 10, throw one per stack. The Party Girl drops them in hardmode.
+					'''
+			}
+
+			AxeMeAQuestion: {
+				DisplayName: Axe Me a Question
+				Tooltip:
+					'''
+					A throwable axe that damages any tree it hits
+					20% chance to confuse enemies
+					'''
+			}
+
+			AxeMeLotsOfQuestions: {
+				DisplayName: Axe Me Lots of Questions
+				Tooltip:
+					'''
+					A throwable axe that instantly chops down any tree it hits
+					50% chance to confuse enemies
+					'''
+			}
+
+			RatTacks: {
+				ModeSummon: Rat Tacks: summon damage
+				ModeMelee: Rat Tacks: melee damage
+				DisplayName: Rat Tacks
+				Tooltip:
+					'''
+					Throws 2-3 rats on the ground that bite anything that touches them
+					Right click to toggle between melee and summon damage
+					Up to 20 at a time, 40 seconds each
+					'''
+			}
+
+			DootDoot: {
+				DisplayName: Doot Doot
+				Tooltip:
+					'''
+					A repeater that converts arrows into skeletons
+					That's right. The entire skeleton.
+					'''
+			}
+
+			ChainedChainsaw: {
+				DisplayName: Chained Chainsaw
+				Tooltip: A cobalt chainsaw yo-yo on a chain
+			}
+
+			GravityFlail: {
+				DisplayName: Gravity Flail
+				Tooltip:
+					'''
+					Enemies hit are slammed into the ground
+					They take bonus damage based on how far they fell. This is not capped.
+					'''
+			}
+
+			BBQSkewer: {
+				DisplayName: BBQ Skewer
+				Tooltip:
+					'''
+					Hold the attack button to stick out a metal skewer
+					Stabbed enemies get stuck on it, can't move, and cook slowly
+					The skewer gets longer with every enemy on it
+					'''
+			}
+
+			StacksOfFish: {
+				DisplayName: Stacks of Fish
+				Tooltip:
+					'''
+					Summons three goldfish that sit on your head
+					Three fish take one minion slot. More fish stack higher.
+					'''
+			}
+
+			Succ: {
+				DisplayName: Succ.
+				Tooltip:
+					'''
+					Pulls every town NPC and player on screen to you
+					Through walls. Succ.
+					'''
+			}
+
+			FartReverbMp4: {
+				DisplayName: Fart Reverb.mp4
+				Tooltip:
+					'''
+					Hold to charge for up to 20 seconds, release to detonate
+					Deals up to 800 damage to everything, including you, and blows up blocks within up to 50 tiles
+					Using it at full charge petrifies you for 10 seconds. Has unknown power and consequences.
+					'''
+			}
+
+			BagOfChaosItem: {
+				DisplayName: Bag of Chaos
+				Tooltip:
+					'''
+					Randomly uses any item in the game
+					Extremely insane speed. Extremely insane everything.
+					'''
+			}
+
+			WoopsAllArrows: {
+				DisplayName: Woops! All Arrows!
+				Tooltip:
+					'''
+					1 base damage, ignores immunity frames and defense
+					On hitting an enemy it explodes into extra arrows equal to twice the number of unique bosses killed in this world
+					'''
+			}
+
+			ArrowOfReplication: {
+				DisplayName: Arrow of Replication
+				Tooltip:
+					'''
+					Firing one duplicates every arrow you currently have in flight
+					Duplicates can't make more duplicates. Each duplicate consumes an arrow from your inventory.
+					'''
+			}
+
+			SlottingPillarAmmo: {
+				DisplayName: Slotting Pillar
+				Tooltip:
+					'''
+					Infinite ammo for bows and guns, but only while your inventory is open
+					Fires a random inventory slot (never the hotbar) that boomerangs back after it hits something
 					'''
 			}
 		}
@@ -605,6 +1334,66 @@ Mods: {
 				DisplayName: Kal'tsit
 				Description: A floating chibi follows you around
 			}
+
+			CrushedGlass: {
+				DisplayName: Crushed Glass
+				Description: Glass and sand blocks are invisible to you
+			}
+
+			CrushedDirt: {
+				DisplayName: Crushed Dirt
+				Description: Dirt glows unreasonably bright
+			}
+
+			EyeOnMe: {
+				DisplayName: Eye on Me!
+				Description: The Eye of Cthulhu has your undivided attention. And your camera.
+			}
+
+			Nails: {
+				DisplayName: Nails
+				Description: Does nothing on its own. The hammer disagrees.
+			}
+
+			Tanned: {
+				DisplayName: Tanned
+				Description: Takes extra damage from minions
+			}
+
+			UnstablePower: {
+				DisplayName: Unstable Power
+				Description: Can't die while potion sick. The hangover is another matter.
+			}
+
+			FishStackBuff: {
+				DisplayName: Stacks of Fish
+				Description: Fish. On your head.
+			}
+
+			SlotterBuff: {
+				DisplayName: Slotter Pillar
+				Description: Your inventory is fighting for you. Keep it open.
+			}
+
+			HarpyMountBuff: {
+				DisplayName: Harpy Wings
+				Description: A harpy is carrying you. Sort of.
+			}
+
+			RatCartBuff: {
+				DisplayName: Rat Cart
+				Description: Squeak squeak
+			}
+
+			SharkboardBuff: {
+				DisplayName: Sharkboard
+				Description: Riding a shark. Breathing underwater. Living the dream.
+			}
+
+			SpiderOnABallBuff: {
+				DisplayName: Spider on a Ball
+				Description: A spinning spider on a spinning ball follows you
+			}
 		}
 
 		NPCs: {
@@ -637,6 +1426,73 @@ Mods: {
 				Shout4: LET'S TAKE THIS OFFLINE!
 				Shout5: WHERE ARE MY BRAINS... I MEAN DELIVERABLES!
 			}
+
+			HoppingLavaBucket.DisplayName: Hopping Lava Bucket
+			DrippyWaterBucket.DisplayName: Drippy Water Bucket
+			BouncingHoneyBucket.DisplayName: Bouncing Honey Bucket
+			ChaoticShimmerBucket.DisplayName: Chaotic Shimmer Bucket
+			DualFlintlockPistols.DisplayName: Dual Flintlock Pistols
+			CommaDotComma.DisplayName: ",.,"
+			GlueBat.DisplayName: Glue Bat
+			MoreZombies.DisplayName: More Zombies!
+			SpinningWorm.DisplayName: Spinning Worm
+			ScreamingFlinx.DisplayName: Screaming Flinx
+			Doppleganger.DisplayName: Doppleganger
+			ChaoticSlime.DisplayName: Chaotic Slime
+			BonemassOfSkeletron.DisplayName: Bonemass of Skeletron
+			GlueDiggerHead.DisplayName: Glue Digger
+			GlueDiggerBody.DisplayName: Glue Digger
+			GlueDiggerTail.DisplayName: Glue Digger
+
+			BiomePile: {
+				DisplayName: Pile
+				Named: "{0} Pile"
+				Biome0: Grass
+				Biome1: Sand
+				Biome2: Snow
+				Biome3: Jungle Grass
+				Biome4: Corrupt Grass
+				Biome5: Crimson Grass
+				Biome6: Hallowed Grass
+				Biome7: Beach Sand
+				Biome8: Stone
+				Biome9: Ash
+			}
+
+			SlotBarCaterpillar: {
+				DisplayName: Slot-bar Caterpillar
+				Stolen: The Slot-bar Caterpillar stole your bottom inventory row!
+				Returned: Your bottom inventory row crawls back to you.
+			}
+
+			Gremlot: {
+				DisplayName: Gremlot
+				Chat0: Ten items. Half price. Don't ask where they came from.
+				Chat1: Everything in my shop fell off the back of someone else's shop.
+				Chat2: New stock at midnight. The old stock also arrives at midnight. From the other shops.
+			}
+
+			RatMerchant: {
+				DisplayName: Rat Merchant
+				Chat0: One man's trash is one rat's inventory.
+				Chat1: You threw it away. I picked it up. One gold. No questions.
+				Chat2: I only sell what you've thrown out. So, your stuff, basically.
+			}
+
+			ChaoticBeholder: {
+				DisplayName: Chaotic Beholder
+				Chat0: Everything with chaos in the name. Everything. I don't make the rules. I just roll them.
+				Chat1: The Chaotic Slime fell and I rose. That's how shops work now.
+				Chat2: Did you know talking to me is a one in twenty gamble? Now you do.
+				Slime: Whoops. That one's on me. Literally, it was on me.
+			}
+
+			Shlue: {
+				DisplayName: Shlue
+				Chat0: ...
+				Chat1: *sticks to you*
+				Chat2: *googly eyes rattle*
+			}
 		}
 
 		Projectiles: {
@@ -660,11 +1516,31 @@ Mods: {
 				DisplayName: Pong Ball
 				Miss: MISS
 			}
+			ThrownNail.DisplayName: Nail
+			SnailFlailProjectile.DisplayName: Snail Flail
+			ConfettiDisc.DisplayName: Ball of Confetti
+			ThrownAxe.DisplayName: Thrown Axe
+			RatTack.DisplayName: Rat Tack
+			ChainsawYoyo.DisplayName: Chained Chainsaw
+			GravityFlailProjectile.DisplayName: Gravity Flail
+			SkewerProjectile.DisplayName: BBQ Skewer
+			FishStackMinion.DisplayName: Stacked Fish
+			MegaFartExplosion.DisplayName: Fart Reverb.mp4
+			WoopsArrow.DisplayName: Woops! Arrow
+			ReplicationArrow.DisplayName: Arrow of Replication
+			SlotProjectile.DisplayName: Inventory Slot
+			SlotMinion.DisplayName: Inventory Slot
+			BottledEnemiesProjectile.DisplayName: Bottled Enemies
+			SpiderOnABallProjectile.DisplayName: Spider on a Ball
+			SlotBoomerang.DisplayName: Stolen Slot
+			BoneHandSweep.DisplayName: Bone Hand
 		}
 
 		Tiles: {
 			AlchemicalDehydratorTile.MapEntry: Alchemical Dehydrator
 			WeatherBeaconTile.MapEntry: Weather Beacon
+			ModelDemonAltarTile.MapEntry: Model Demon Altar
+			ChaoticDehydratorTile.MapEntry: Chaotic Dehydrator
 		}
 
 		Bestiary: {
@@ -674,6 +1550,26 @@ Mods: {
 			ZombieSalesman: Rose from the grave to hit his quota. While he's around, every item icon in your inventory is a zombie. That's his pitch.
 			ZombieIntern: Sits around and does nothing. Technically part of the invasion. Nobody has told it what to do.
 			ZombieCEO: Tanky, loud, obnoxious, and gets stronger for every zombie on screen. Has never written a line of code.
+			HoppingLavaBucket: Someone filled a bucket with lava and it got ideas. Hops around aimlessly, burns on contact.
+			DrippyWaterBucket: A water bucket with ambition. Hops around, leaves everything damp.
+			BouncingHoneyBucket: A honey bucket that heals you a little and makes you sticky. The nicest enemy in the game.
+			ChaoticShimmerBucket: A bottomless shimmer bucket on the move. Anything it bumps into gets shimmered.
+			DualFlintlockPistols: Two pistols, no owner, plenty of ammunition. They take turns.
+			BiomePile: A heap of whatever makes the biome you're standing in. Break it for fishing loot.
+			CommaDotComma: Three pixels. Mortal only between 3:21 and 3:24 AM on a full moon. Do not kill it. Seriously.
+			GlueBat: A slightly faster cave bat, white, and sticky.
+			GlueDigger: A slightly faster digger, white, and sticky.
+			MoreZombies: A very large zombie that makes more zombies every time you hit it. Blood moons only.
+			SpinningWorm: Falls out of the rain, spinning. Dies on impact and leaves a worm. The rain is weird here.
+			ScreamingFlinx: Falls out of blizzards, screaming the whole way down. The scream hurts.
+			Doppleganger: Appears next to town NPCs at night wearing your name and your clothes. If you hit it, it leaves.
+			Gremlot: Sells ten random items from the other shops in town at half price. Restocks at midnight. Always called Gremlot.
+			RatMerchant: Sells the last twenty things you threw in the trash, one gold each. Moves in once you've trashed twenty different things.
+			ChaoticBeholder: Sells everything with "Chaos" in the name once the Chaotic Slime is dead. Talking to him is a one in twenty gamble.
+			Shlue: Two glue slimes in a trench coat, with googly eyes. Moves in after fifty glue creatures have died. Always called Shlue.
+			ChaoticSlime: A King Slime that can't settle on a colour and keeps teleporting. Beat it to unlock the Chaotic Beholder.
+			SlotBarCaterpillar: Steals your bottom inventory row and wears it as a body. Wiggles. Throws your stuff at you. 10,000 HP of pure inconvenience.
+			BonemassOfSkeletron: One time in four the Old Man's curse summons this instead. A slow heap of bones that spews bones, sweeps hands, rains bones and raises skeletons. Legally Skeletron.
 		}
 
 		Events: {
@@ -697,9 +1593,20 @@ Mods: {
 			Beacon5: A beacon fills the air with jelly. Everything bounces.
 			Beacon6: A beacon makes it rain frogs. Watch your step.
 			BeaconRemoved: The weather beacon is gone. The weather is weather again.
+			BonemassRises: The curse takes a different shape... the Bonemass of Skeletron rises!
+			ChaoticSlimeDown: The Chaotic Slime has been defeated! A Chaotic Beholder will want a house.
 		}
 
 		Dehydrator.NotEligible: The Dehydrator only accepts living things that contain water (critters, fish, plants).
+
+		RemoteMenu: {
+			NoNPC: "There is no {0} living in this world. Awkward."
+			SellOnly: Welcome to the portable shop. We buy. We don't sell. It's a lifestyle.
+			DirectoryTitle: NPC Directory
+		}
+
+		DeathMessages.FartMp4: "{0} charged the Fart Reverb.mp4 all the way."
+		DeathMessages.UnstableConcoction: "{0}'s potion sickness wore off."
 		DeathMessages.DrinkableLava: "{0} drank lava. What did they expect?"
 
 		Configs: {

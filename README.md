@@ -89,6 +89,37 @@ everything it touches), Zombie Salesman, Zombie Intern, Zombie CEO.
 ### Pets
 Monst3r (light pet) and Kal'tsit (vanity pet): floating chibi placeholders of the Arknights characters.
 
+## Update 3 (the big one)
+
+### Patches
+* Alchemical Dehydrator: hold right click to mass-process. Slippery Frog uses the vanilla frog sprite; Frog Rain slipperiness only on blocks, no slowdown, double run speed on blocks.
+* Glue lasts 5 seconds, glued things get a white outline, coming unglued removes the debuff, and glued enemies also get Life Link (8 s, 25% damage reduction).
+* Delirium is now the **Delirium Moon**: 1-in-3 new moon nights, every enemy is a silhouette, one swaps places with you every 10-15 seconds.
+* Corporate Zombie Invasion uses the vanilla (goblin) progress bar and needs 50 kills; the corporate zombies wear vanilla zombie sprites.
+* Sky in a Bottle makes its cloud when a jump peaks instead of on a double jump. Fart Reverb uses the vanilla fart sound and barely moves you.
+* Weedy Beer lasts 10 minutes and stacks up to five tiers. Glue Slime is a white vanilla slime.
+* Weather beacons are tinted Crystal Balls, toggle with right click (last switched-on wins), and cost glass, a Life Crystal, clouds and a weather block.
+
+### New items
+Chaotic Dehydrator, Bottled Prehardmode / Hardmode (+ Biome'd), the Rubber Banding Bandit armor set (four class helmets, suit, shoes, bouncy set bonus),
+Tanning Mirror, Woops! All Arrows!, Arrow of Replication, Ball of Spiders / Balls of Spiders (wings) / Spider on a Ball (pet) via shimmer,
+the three Triforce pieces and the Complete Triforce, Succ., Doot Doot, Stalemate, Loot Scanner, Snail Flail / Hot Snail Flail, Ball of Confetti / Balls
+of Confetti / Ball of Glue, five remote NPC tools and the NPC Directory, "Harpy" Wings, Rat Tacks, Axe Me a Question / Lots of Questions, Rat Cart,
+Fart Reverb.mp4, Touch Grass, Slippery Frog Shoes, Nail and Hammer, Stacks of Fish, Sharkboard, Chained Chainsaw, Hollow Block, Blue Core Block,
+Crushed Glass / Crushed Dirt potions, N-Terraria, Pull the Lever Kronk!, Gentlemen Stack., Chaotic Quiver / Ammo Box / Ammunition Roulette, the four
+Chaotic weapon boxes, Chaotic Dash Box, Chaotic Banker, Bag of Chaos, Unstable Concoction, Team Tether, Slotter Pillar, Slotting Pillar, Rat Package Co.,
+Model Demon Altar, Gravity Flail, the three Compressed crystals, BBQ Skewer.
+
+### New NPCs and bosses
+Gremlot, Rat Merchant, Chaotic Beholder, Shlue (town pet), Doppleganger, four hopping buckets, Dual Flintlock Pistols, Biome Piles, ",.,", Glue Digger,
+Glue Bat, More Zombies!, Spinning Worm, Screaming Flinx; bosses: Bonemass of Skeletron (1-in-4 Skeletron replacement, or Bone Pile at a demon altar),
+Slot-bar Caterpillar (Slot Machine Token), Chaotic Slime (Chaotic Gel). Expert treasure bags where it makes sense.
+
+### Notes
+* Wherever a vanilla sprite fit, the mod borrows it (`Texture` overrides). Everything else is still placeholder art from `tools/gen_assets.py`.
+* ",.," really does crash the game when killed, as requested. It can only be killed between 3:21 and 3:24 AM on a full moon.
+* The Screaming Flinx uses a synthesized scream; a certain cartoon cat's scream is copyrighted.
+
 ## Config
 Client side: toggle/intensity for the 3D effect, toggle/radius for TM Flash darkness, Zombie Salesman icon takeover, and whether the
 Fart Reverb launches players.

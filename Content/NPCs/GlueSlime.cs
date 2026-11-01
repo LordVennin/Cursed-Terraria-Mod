@@ -1,3 +1,4 @@
+using BagofChaos.Common.Systems;
 using BagofChaos.Content.Buffs;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -11,8 +12,10 @@ namespace BagofChaos.Content.NPCs
 	// A neutral slime. Deals no contact damage, but everything it touches gets the Glue debuff. Then it bounces off with a new friend attached.
 	public class GlueSlime : ModNPC
 	{
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.BlueSlime;
+
 		public override void SetStaticDefaults() {
-			Main.npcFrameCount[Type] = 2;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.BlueSlime];
 			NPCID.Sets.ImmuneToRegularBuffs[Type] = true;
 			NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new NPCID.Sets.NPCBestiaryDrawModifiers { Velocity = 1f });
 		}
@@ -28,7 +31,8 @@ namespace BagofChaos.Content.NPCs
 			NPC.value = 25f;
 			NPC.knockBackResist = 0.8f;
 			NPC.aiStyle = NPCAIStyleID.Slime;
-			NPC.alpha = 30;
+			NPC.alpha = 40;
+			NPC.color = new Color(255, 255, 245, 200); // the slime sheet is grey; the colour makes it a white slime
 			AIType = NPCID.BlueSlime;
 			AnimationType = NPCID.BlueSlime;
 		}
@@ -46,18 +50,22 @@ namespace BagofChaos.Content.NPCs
 					if (other.whoAmI == NPC.whoAmI || other.type == Type || !other.Hitbox.Intersects(NPC.Hitbox))
 						continue;
 					if (!other.HasBuff<GlueDebuff>())
-						other.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 20);
+						other.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 5);
 				}
 			}
 			if (Main.netMode != NetmodeID.Server) {
 				Player local = Main.LocalPlayer;
 				if (local.active && !local.dead && local.Hitbox.Intersects(NPC.Hitbox))
-					local.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 20);
+					local.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 5);
 			}
 			if (Main.rand.NextBool(8)) {
 				Dust dust = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Cloud, 0f, 0f, 100, new Color(255, 250, 220), 0.8f);
 				dust.noGravity = true;
 			}
+		}
+
+		public override void OnKill() {
+			ChaosEvents.RegisterGlueKill();
 		}
 
 		public override void ModifyNPCLoot(NPCLoot npcLoot) {

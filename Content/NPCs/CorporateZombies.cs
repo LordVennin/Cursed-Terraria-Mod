@@ -25,8 +25,10 @@ namespace BagofChaos.Content.NPCs
 	// Replaces every item icon in your UI with a walking zombie while he's around. Also hits you with the 3D debuff. He sells TVs.
 	public class ZombieSalesman : CorporateZombie
 	{
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Zombie;
+
 		public override void SetStaticDefaults() {
-			Main.npcFrameCount[Type] = 4;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.Zombie];
 			NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new NPCID.Sets.NPCBestiaryDrawModifiers { Velocity = 1f });
 		}
 
@@ -42,11 +44,8 @@ namespace BagofChaos.Content.NPCs
 			NPC.knockBackResist = 0.5f;
 			NPC.aiStyle = NPCAIStyleID.Fighter;
 			AIType = NPCID.Zombie;
-		}
-
-		public override void FindFrame(int frameHeight) {
-			NPC.frameCounter += System.Math.Abs(NPC.velocity.X) > 0.1f ? 1 : 0.3;
-			NPC.frame.Y = ((int)(NPC.frameCounter / 7) % 4) * frameHeight;
+			AnimationType = NPCID.Zombie;
+			NPC.color = new Color(200, 200, 255); // the tie is implied
 		}
 
 		public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo) {
@@ -66,8 +65,10 @@ namespace BagofChaos.Content.NPCs
 	// Sits around and does nothing. Counts toward the invasion. Someone has to.
 	public class ZombieIntern : CorporateZombie
 	{
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Zombie;
+
 		public override void SetStaticDefaults() {
-			Main.npcFrameCount[Type] = 2;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.Zombie];
 		}
 
 		public override void SetDefaults() {
@@ -81,6 +82,7 @@ namespace BagofChaos.Content.NPCs
 			NPC.value = 5f;
 			NPC.knockBackResist = 0.8f;
 			NPC.aiStyle = -1;
+			NPC.color = new Color(255, 255, 200);
 		}
 
 		public override void AI() {
@@ -93,8 +95,7 @@ namespace BagofChaos.Content.NPCs
 		public override bool CanHitPlayer(Player target, ref int cooldownSlot) => false;
 
 		public override void FindFrame(int frameHeight) {
-			NPC.frameCounter++;
-			NPC.frame.Y = ((int)(NPC.frameCounter / 40) % 2) * frameHeight;
+			NPC.frame.Y = 0; // standing still, forever, like a true intern
 		}
 
 		public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry) {
@@ -108,8 +109,10 @@ namespace BagofChaos.Content.NPCs
 	{
 		private int shoutTimer;
 
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Zombie;
+
 		public override void SetStaticDefaults() {
-			Main.npcFrameCount[Type] = 4;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.Zombie];
 			NPCID.Sets.MPAllowedEnemies[Type] = true;
 			NPCID.Sets.BossBestiaryPriority.Add(Type);
 			NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new NPCID.Sets.NPCBestiaryDrawModifiers { Velocity = 1f, Scale = 0.8f });
@@ -129,6 +132,9 @@ namespace BagofChaos.Content.NPCs
 			NPC.npcSlots = 10f;
 			NPC.aiStyle = NPCAIStyleID.Fighter;
 			AIType = NPCID.Zombie;
+			AnimationType = NPCID.Zombie;
+			NPC.scale = 2.2f; // executive presence
+			NPC.color = new Color(255, 230, 150);
 			if (!Main.dedServ)
 				Music = MusicID.Boss1;
 		}
@@ -161,11 +167,6 @@ namespace BagofChaos.Content.NPCs
 			// Despawn if the invasion ended without him (he got a golden parachute).
 			if (!ChaosEvents.InvasionActive && NPC.timeLeft > 60)
 				NPC.timeLeft = 60;
-		}
-
-		public override void FindFrame(int frameHeight) {
-			NPC.frameCounter += System.Math.Abs(NPC.velocity.X) > 0.1f ? 1 : 0.3;
-			NPC.frame.Y = ((int)(NPC.frameCounter / 8) % 4) * frameHeight;
 		}
 
 		public override void ModifyNPCLoot(NPCLoot npcLoot) {

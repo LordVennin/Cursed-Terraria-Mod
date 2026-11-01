@@ -761,6 +761,214 @@ def gen_icons():
     s.save("icon_small.png")
 
 
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Big update batch: every new item/NPC/boss that has no vanilla sprite to borrow
+# ---------------------------------------------------------------------------------------------------------------------
+def armor_sheets(prefix, cloth, trim):
+    """Head/Legs: 40x1120 (20 frames of 56px). Body: 360x224 (9x4 of 40x56)."""
+    A = "Content/Items/Armor/"
+    head = Sprite(40, 1120)
+    for f in range(20):
+        y = f * 56
+        head.rect(9, y + 2, 30, y + 14, cloth)
+        head.rect(9, y + 10, 30, y + 14, trim)
+    head.save(A + prefix + "_Head.png")
+    body = Sprite(360, 224)
+    for row in range(4):
+        for col in range(9):
+            x, y = col * 40, row * 56
+            body.rect(x + 10, y + 20, x + 29, y + 40, cloth)
+            body.rect(x + 10, y + 28, x + 29, y + 31, trim)
+    body.save(A + prefix + "_Body.png")
+    legs = Sprite(40, 1120)
+    for f in range(20):
+        y = f * 56
+        legs.rect(12, y + 40, 18, y + 54, cloth); legs.rect(21, y + 40, 27, y + 54, cloth)
+        legs.rect(12, y + 50, 18, y + 54, trim); legs.rect(21, y + 50, 27, y + 54, trim)
+    legs.save(A + prefix + "_Legs.png")
+
+
+def gen_update_assets():
+    I = "Content/Items/"
+    P = "Content/Projectiles/"
+    N = "Content/NPCs/"
+    B = "Content/Buffs/"
+
+    def icon(path, draw, w=24, h=24):
+        s = Sprite(w, h); draw(s); s.save(path)
+
+    def badge(color, letter_color=WHITE):
+        def d(s):
+            s.rect(1, 1, 22, 22, color)
+            s.rect(6, 6, 17, 17, letter_color, outline=None)
+        return d
+
+    def tri(color):
+        def d(s):
+            s.poly([(12, 1), (23, 22), (1, 22)], color)
+            s.poly([(12, 11), (17, 22), (7, 22)], BLACK, outline=None)
+        return d
+
+    # --- weapons / tools with no vanilla look ---
+    icon(I + "Weapons/TanningMirror.png", lambda s: (s.ellipse(2, 2, 25, 25, SILVER), s.ellipse(6, 6, 21, 21, LIGHTBLUE), s.rect(12, 20, 15, 27, DARKGREY)), 28, 28)
+    icon(I + "Weapons/NailAndHammer.png", lambda s: (s.rect(13, 4, 27, 12, DARKGREY), s.rect(18, 12, 22, 29, BROWN), s.line(4, 24, 10, 6, SILVER, 2)), 30, 30)
+    icon(I + "Weapons/BBQSkewer.png", lambda s: (s.line(2, 38, 36, 4, SILVER, 3), s.ellipse(20, 14, 30, 24, DARKRED), s.ellipse(10, 24, 20, 34, ORANGE)), 40, 40)
+    icon(I + "Weapons/Succ.png", lambda s: (s.rect(4, 10, 24, 20, DARKGREY), s.ellipse(0, 6, 10, 24, BLACK), s.poly([(24, 10), (27, 15), (24, 20)], GREY)), 28, 28)
+    icon(I + "Weapons/FartReverbMp4.png", lambda s: (s.rect(1, 6, 30, 26, DARKGREY), s.rect(4, 9, 27, 16, GOLD), s.ellipse(7, 17, 13, 23, WHITE), s.ellipse(18, 17, 24, 23, WHITE)), 32, 32)
+    icon(I + "Weapons/BagOfChaosItem.png", lambda s: (s.rect(4, 10, 25, 29, BROWN), s.rect(8, 4, 21, 12, DARKBROWN), s.ellipse(10, 14, 19, 23, PURPLE), s.ellipse(13, 17, 16, 20, YELLOW, outline=None)), 30, 30)
+    icon(I + "Weapons/SlotterPillar.png", lambda s: (s.rect(2, 2, 27, 27, DARKBLUE), s.rect(6, 6, 23, 23, (90, 100, 200, 255)), s.rect(10, 10, 19, 19, GOLD)), 30, 30)
+    for name, col in [("ChaoticSwordBox", RED), ("ChaoticRangerBox", GREEN), ("ChaoticMagicBox", BLUE), ("ChaoticWhipBox", GOLD)]:
+        icon(I + "Weapons/" + name + ".png", badge(col, Main_color := (col[0] // 2, col[1] // 2, col[2] // 2, 255)), 26, 26)
+    icon(I + "Ammo/SlottingPillarAmmo.png", lambda s: (s.rect(1, 1, 18, 18, DARKBLUE), s.rect(5, 5, 14, 14, (90, 100, 200, 255))), 20, 20)
+    for name in ["GuidesGuidebookOfGuiding", "ShopkeepersPortableShopOfKeeping", "GoblinYourMoney", "SnippingTool", "AnglersPocketguide", "NPCDirectory", "GentlemenStack",
+                 "ChaoticQuiver", "ChaoticAmmoBox", "ChaoticAmmunitionRoulette", "ChaoticDashBox", "ChaoticBanker"]:
+        col = {"GuidesGuidebookOfGuiding": GREEN, "ShopkeepersPortableShopOfKeeping": GOLD, "GoblinYourMoney": PURPLE, "SnippingTool": PINK,
+               "AnglersPocketguide": BLUE, "NPCDirectory": TAN, "GentlemenStack": SILVER, "ChaoticQuiver": BROWN, "ChaoticAmmoBox": DARKGREY,
+               "ChaoticAmmunitionRoulette": RED, "ChaoticDashBox": CYAN, "ChaoticBanker": GOLD}[name]
+        icon(I + "Tools/" + name + ".png", lambda s, c=col: (s.rect(2, 2, 21, 21, c), s.text_ish(6, 9, 4, BLACK), s.text_ish(6, 14, 4, BLACK)))
+
+    # --- accessories ---
+    icon(I + "Accessories/TriforceOfWisdom.png", tri(BLUE)); icon(I + "Accessories/TriforceOfPower.png", tri(RED)); icon(I + "Accessories/TriforceOfCourage.png", tri(GREEN))
+    icon(I + "Accessories/CompleteTriforceOfHyrule.png", tri(GOLD))
+    icon(I + "Accessories/Stalemate.png", lambda s: (s.rect(2, 2, 21, 21, WHITE), s.rect(2, 2, 11, 11, BLACK, outline=None), s.rect(12, 12, 21, 21, BLACK, outline=None)))
+    icon(I + "Accessories/LootScanner.png", lambda s: (s.rect(2, 6, 21, 18, DARKGREY), s.rect(5, 9, 18, 15, GREEN), s.line(5, 12, 18, 12, LIME)))
+    icon(I + "Accessories/TouchGrass.png", lambda s: (s.rect(2, 14, 21, 21, DARKGREEN), s.line(6, 14, 6, 6, GREEN, 2), s.line(12, 14, 12, 4, GREEN, 2), s.line(18, 14, 18, 8, GREEN, 2)))
+    icon(I + "Accessories/SlipperyFrogShoes.png", lambda s: (s.rect(1, 10, 10, 20, GREEN), s.rect(13, 10, 22, 20, GREEN), s.ellipse(2, 5, 6, 9, WHITE), s.ellipse(14, 5, 18, 9, WHITE)))
+    icon(I + "Accessories/NTerraria.png", lambda s: (s.rect(1, 1, 22, 22, BLACK), s.rect(6, 6, 17, 17, WHITE, outline=None), s.rect(9, 9, 14, 14, BLACK, outline=None)))
+    icon(I + "Accessories/UnstableConcoction.png", lambda s: (s.ellipse(4, 6, 19, 23, PURPLE), s.rect(9, 1, 14, 7, LIGHTGREY), s.ellipse(8, 12, 12, 16, PINK, outline=None)))
+    icon(I + "Accessories/TeamTether.png", lambda s: (s.line(2, 20, 20, 4, DARKGREY, 3), s.poly([(18, 1), (23, 6), (18, 11), (13, 6)], RED)))
+    icon(I + "Accessories/BallsOfSpiders.png", lambda s: (s.ellipse(1, 4, 11, 14, BLACK), s.ellipse(12, 4, 22, 14, BLACK), s.ellipse(4, 14, 19, 22, DARKGREY)))
+    # wings sheet: 4 frames of 44x48
+    s = Sprite(44, 192)
+    for f in range(4):
+        y = f * 48; spread = f * 4
+        s.ellipse(2, y + 10 - spread, 20, y + 30 + spread, BLACK); s.ellipse(24, y + 10 - spread, 42, y + 30 + spread, BLACK)
+        for i in range(3):
+            s.line(6, y + 14 + i * 6, 16, y + 16 + i * 6, DARKGREY); s.line(28, y + 14 + i * 6, 38, y + 16 + i * 6, DARKGREY)
+    s.save(I + "Accessories/BallsOfSpiders_Wings.png")
+
+    # --- bandit armor ---
+    icon(I + "Armor/RubberBandingBanditMask.png", lambda s: (s.rect(1, 6, 21, 18, DARKRED), s.rect(5, 9, 9, 13, BLACK, outline=None), s.rect(13, 9, 17, 13, BLACK, outline=None)), 22, 20)
+    icon(I + "Armor/RubberBandingBanditBandana.png", lambda s: (s.rect(1, 6, 21, 14, BLUE), s.line(16, 14, 21, 19, BLUE, 2)), 22, 20)
+    icon(I + "Armor/RubberBandingBanditGoggles.png", lambda s: (s.ellipse(1, 6, 10, 15, GOLD), s.ellipse(12, 6, 21, 15, GOLD), s.rect(10, 9, 12, 11, DARKGREY)), 22, 20)
+    icon(I + "Armor/RubberBandingBanditWarpaint.png", lambda s: (s.ellipse(2, 1, 20, 19, SKIN), s.line(5, 8, 9, 14, RED, 2), s.line(13, 8, 17, 14, RED, 2)), 22, 20)
+    icon(I + "Armor/RubberBandingBanditSuit.png", lambda s: (s.rect(1, 2, 24, 19, DARKRED), s.rect(8, 6, 17, 15, PINK)), 26, 20)
+    icon(I + "Armor/RubberBandingBanditShoes.png", lambda s: (s.rect(1, 6, 11, 17, DARKRED), s.rect(14, 6, 24, 17, DARKRED), s.rect(1, 14, 11, 17, PINK), s.rect(14, 14, 24, 17, PINK)), 26, 18)
+    for h in ["RubberBandingBanditMask", "RubberBandingBanditBandana", "RubberBandingBanditGoggles", "RubberBandingBanditWarpaint"]:
+        head = Sprite(40, 1120)
+        for f in range(20):
+            y = f * 56
+            head.rect(9, y + 2, 30, y + 14, DARKRED); head.rect(9, y + 10, 30, y + 14, PINK)
+        head.save(I + "Armor/" + h + "_Head.png")
+    armor_sheets("RubberBandingBanditSuit", DARKRED, PINK)
+    import os
+    os.remove(os.path.join(ROOT, I + "Armor/RubberBandingBanditSuit_Head.png"))
+    os.rename(os.path.join(ROOT, I + "Armor/RubberBandingBanditSuit_Legs.png"), os.path.join(ROOT, I + "Armor/RubberBandingBanditShoes_Legs.png"))
+
+    # --- consumables ---
+    icon(I + "Consumables/BallOfSpiders.png", lambda s: (s.ellipse(2, 2, 21, 21, BLACK), s.ellipse(8, 8, 15, 15, DARKGREY, outline=None)))
+    icon(I + "Consumables/BallOfConfetti.png", lambda s: (s.ellipse(2, 2, 21, 21, WHITE), s.px(7, 8, RED), s.px(12, 6, BLUE), s.px(15, 13, GREEN), s.px(9, 15, YELLOW)))
+    icon(I + "Consumables/BallOfGlue.png", lambda s: (s.ellipse(2, 2, 21, 21, (250, 250, 230, 255)),))
+    icon(I + "Consumables/PullTheLeverKronk.png", lambda s: (s.rect(8, 18, 15, 26, DARKGREY), s.line(11, 18, 6, 4, SILVER, 2), s.ellipse(2, 0, 10, 8, RED)), 20, 28)
+    bottle(LIGHTGREY).save(I + "Consumables/CrushedGlassPotion.png"); bottle(BROWN).save(I + "Consumables/CrushedDirtPotion.png")
+    icon(I + "Consumables/CompressedLifeCrystal.png", lambda s: (s.poly([(10, 1), (18, 12), (10, 23), (2, 12)], RED), s.poly([(10, 6), (14, 12), (10, 18), (6, 12)], PINK, outline=None)), 20, 24)
+    icon(I + "Consumables/CompressedManaCrystal.png", lambda s: (s.poly([(10, 1), (18, 12), (10, 23), (2, 12)], BLUE), s.poly([(10, 6), (14, 12), (10, 18), (6, 12)], LIGHTBLUE, outline=None)), 20, 24)
+    icon(I + "Consumables/CompressedLifeFruit.png", lambda s: (s.ellipse(2, 4, 18, 22, GOLD), s.rect(9, 0, 11, 6, DARKGREEN), s.ellipse(6, 8, 14, 16, RED, outline=None)), 20, 24)
+    icon(I + "Consumables/RatPackageCo.png", lambda s: (s.rect(2, 6, 21, 21, TAN), s.text_ish(5, 12, 4, DARKBROWN), s.ellipse(14, 2, 21, 8, GREY)))
+    for name, col in [("BottledPrehardmode", GREEN), ("BottledHardmode", PURPLE), ("BiomedBottledPrehardmode", LIME), ("BiomedBottledHardmode", PINK)]:
+        bottle(col).save(I + "Consumables/" + name + ".png")
+    icon(I + "Consumables/ChaoticGel.png", lambda s: (s.ellipse(2, 6, 21, 21, PINK), s.ellipse(6, 9, 11, 13, WHITE, outline=None)))
+    icon(I + "Consumables/SlotMachineToken.png", lambda s: (s.ellipse(1, 1, 22, 22, GOLD), s.rect(7, 7, 16, 16, DARKBLUE)))
+    icon(I + "Consumables/BonePile.png", lambda s: (s.rect(2, 14, 21, 20, WHITE), s.rect(6, 8, 17, 14, WHITE), s.rect(9, 3, 14, 8, WHITE)))
+    icon(I + "Consumables/CaterpillarBag.png", lambda s: (s.rect(3, 6, 20, 23, DARKBLUE), s.rect(7, 2, 16, 8, GOLD), s.rect(8, 11, 15, 18, (90, 100, 200, 255))))
+    icon(I + "Consumables/ChaoticSlimeBag.png", lambda s: (s.rect(3, 6, 20, 23, PINK), s.rect(7, 2, 16, 8, GOLD), s.ellipse(8, 11, 15, 18, PURPLE)))
+
+    # --- mounts ---
+    icon(I + "Mounts/HarpyWings.png", lambda s: (s.ellipse(1, 6, 10, 16, TAN), s.ellipse(12, 6, 21, 16, TAN), s.ellipse(8, 2, 14, 8, SKIN)), 22, 22)
+    icon(I + "Mounts/RatCart.png", lambda s: (s.rect(2, 8, 19, 18, BROWN), s.ellipse(3, 16, 9, 22, BLACK), s.ellipse(13, 16, 19, 22, BLACK), s.ellipse(6, 2, 16, 9, GREY)), 22, 22)
+    icon(I + "Mounts/Sharkboard.png", lambda s: (s.poly([(1, 11), (16, 5), (21, 11), (16, 17)], GREY), s.poly([(8, 5), (12, 0), (13, 7)], GREY)), 22, 22)
+    s = Sprite(40, 90)  # rat cart mount sheet: 3 frames of 40x30
+    for f in range(3):
+        y = f * 30
+        s.rect(4, y + 6, 35, y + 22, BROWN)
+        s.ellipse(5, y + 18, 15, y + 28, BLACK); s.ellipse(24, y + 18, 34, y + 28, BLACK)
+        s.ellipse(12, y + 0, 26, y + 8, GREY); s.px(23, y + 3, BLACK)
+        s.line(2, y + 4 + f, 12, y + 2, PINK)
+    s.save("Content/Mounts/RatCartMount.png")
+
+    # --- blocks ---
+    for name, col, trim in [("HollowBlock", (30, 30, 40, 170), GOLD), ("BlueCoreBlock", (60, 120, 255, 170), (120, 170, 255, 255))]:
+        icon(I + "Placeable/" + name + ".png", lambda s, c=col, t=trim: (s.rect(0, 0, 15, 15, c, outline=t),), 16, 16)
+        sheet = Sprite(288, 270)
+        for cx in range(16):
+            for cy in range(15):
+                x, y = cx * 18, cy * 18
+                sheet.rect(x, y, x + 15, y + 15, col, outline=trim)
+        sheet.save("Content/Tiles/" + name + "Tile.png")
+    icon(I + "Placeable/ModelDemonAltar.png", lambda s: (s.rect(0, 8, 27, 19, DARKGREY), s.rect(4, 4, 23, 10, (80, 110, 200, 255)), s.ellipse(10, 0, 17, 7, LIGHTBLUE)), 28, 20)
+    s = Sprite(32, 26); s.rect(0, 6, 31, 25, GREY); s.rect(4, 10, 27, 21, DARKGREY); s.ellipse(8, 0, 23, 10, (255, 0, 255, 255)); s.save(I + "Placeable/ChaoticDehydrator.png")
+    s = Sprite(54, 36); s.rect(0, 10, 53, 35, GREY); s.rect(6, 16, 47, 31, DARKGREY); s.ellipse(14, 0, 39, 18, (255, 0, 255, 255)); s.rect(20, 20, 33, 27, CYAN); s.save("Content/Tiles/ChaoticDehydratorTile.png")
+
+    # --- projectiles ---
+    s = Sprite(60, 8); s.line(0, 4, 59, 4, SILVER, 3); s.poly([(54, 1), (59, 4), (54, 7)], LIGHTGREY); s.save(P + "SkewerProjectile.png")
+
+    # --- NPCs ---
+    for name, col in [("Gremlot", (170, 255, 170, 255)), ("RatMerchant", (200, 180, 170, 255)), ("ChaoticBeholder", (255, 170, 255, 255)), ("Shlue", (250, 250, 235, 255))]:
+        s = Sprite(26, 24); s.ellipse(2, 2, 23, 23, col); s.px(9, 10, BLACK); s.px(16, 10, BLACK); s.save(N + name + "_Head.png")
+    s = Sprite(30, 88)  # Shlue: two glue slimes stacked, 2 frames of 44
+    for f in range(2):
+        y = f * 44; sq = f * 2
+        s.ellipse(1, y + 22 + sq, 28, y + 43, (250, 250, 235, 220), outline=(200, 200, 180, 255))
+        s.ellipse(5, y + 4 + sq, 26, y + 26, (250, 250, 235, 220), outline=(200, 200, 180, 255))
+        s.ellipse(9, y + 9 + sq, 15, y + 15 + sq, WHITE); s.ellipse(17, y + 9 + sq, 23, y + 15 + sq, WHITE)
+        s.px(12, y + 12 + sq, BLACK); s.px(20, y + 12 + sq, BLACK)
+    s.save(N + "Shlue.png")
+    s = Sprite(48, 32); s.rect(8, 12, 40, 31, BROWN); s.rect(16, 4, 32, 14, BROWN); s.save(N + "BiomePile.png")
+    s = Sprite(120, 400)  # Bonemass: 4 frames of 120x100
+    rnd = random.Random(5)
+    for f in range(4):
+        y = f * 100
+        for i in range(40):
+            bx = rnd.randint(4, 100); by = y + rnd.randint(20, 84) + (f % 2) * 2
+            s.rect(bx, by, bx + rnd.randint(6, 16), by + 4, WHITE)
+        s.ellipse(44, y + 6, 76, y + 38, WHITE); s.rect(50, y + 18, 56, y + 24, BLACK, outline=None); s.rect(64, y + 18, 70, y + 24, BLACK, outline=None)
+    s.save("Content/NPCs/Bosses/BonemassOfSkeletron.png")
+    for name, col in [("BonemassOfSkeletron", WHITE), ("SlotBarCaterpillar", (90, 100, 200, 255)), ("ChaoticSlime", PINK)]:
+        s = Sprite(24, 24); s.ellipse(1, 1, 22, 22, col); s.px(8, 10, BLACK); s.px(15, 10, BLACK); s.save("Content/NPCs/Bosses/" + name + "_Head_Boss.png")
+
+    # --- buffs ---
+    def buff(name, draw):
+        s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY, outline=BLACK); draw(s); s.save(B + name + ".png")
+    buff("CrushedGlass", lambda s: (s.rect(6, 6, 25, 25, (230, 240, 255, 120)),))
+    buff("CrushedDirt", lambda s: (s.rect(6, 6, 25, 25, BROWN), s.ellipse(10, 10, 21, 21, ORANGE, outline=None)))
+    buff("EyeOnMe", lambda s: (s.ellipse(4, 8, 27, 24, WHITE), s.ellipse(12, 11, 20, 21, RED), s.ellipse(14, 13, 18, 19, BLACK, outline=None)))
+    buff("Nails", lambda s: (s.line(8, 6, 8, 26, SILVER, 2), s.line(16, 6, 16, 26, SILVER, 2), s.line(24, 6, 24, 26, SILVER, 2)))
+    buff("Tanned", lambda s: (s.ellipse(6, 6, 25, 25, ORANGE), s.ellipse(11, 11, 20, 20, YELLOW, outline=None)))
+    buff("UnstablePower", lambda s: (s.ellipse(6, 6, 25, 25, PURPLE), s.poly([(16, 8), (12, 18), (17, 17), (14, 25), (21, 14), (16, 15)], YELLOW, outline=None)))
+    buff("FishStackBuff", lambda s: (s.ellipse(6, 8, 25, 16, GOLD), s.ellipse(6, 16, 25, 24, GOLD)))
+    buff("SlotterBuff", lambda s: (s.rect(6, 6, 25, 25, DARKBLUE), s.rect(10, 10, 21, 21, (90, 100, 200, 255))))
+    buff("HarpyMountBuff", lambda s: (s.ellipse(4, 10, 15, 22, TAN), s.ellipse(16, 10, 27, 22, TAN)))
+    buff("RatCartBuff", lambda s: (s.rect(6, 10, 25, 22, BROWN), s.ellipse(7, 20, 13, 26, BLACK), s.ellipse(18, 20, 24, 26, BLACK)))
+    buff("SharkboardBuff", lambda s: (s.poly([(4, 16), (20, 9), (27, 16), (20, 23)], GREY),))
+    s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY, outline=BLACK); s.ellipse(6, 14, 25, 28, ORANGE); s.ellipse(10, 4, 21, 15, BLACK); s.save("Content/Pets/SpiderOnABallBuff.png")
+    s = Sprite(20, 24); s.ellipse(2, 8, 17, 23, ORANGE); s.ellipse(5, 1, 14, 10, BLACK); s.save("Content/Pets/SpiderOnABallItem.png")
+
+    # --- scream sound (synthesised; no copyrighted cat involved) ---
+    rate = 22050
+    n = int(rate * 0.9)
+    out = []
+    phase = 0.0
+    for i in range(n):
+        t = i / rate
+        env = min(1, t * 30) * max(0, 1 - (t - 0.6) / 0.3 if t > 0.6 else 1)
+        freq = 520 + 260 * math.sin(t * 25) + 180 * math.sin(t * 7)
+        phase += 2 * math.pi * freq / rate
+        out.append((math.sin(phase) * 0.45 + math.sin(phase * 2.01) * 0.25 + math.sin(phase * 3.02) * 0.15 + random.uniform(-0.1, 0.1)) * env)
+    write_wav("Assets/Sounds/Scream.wav", out)
+
+
 if __name__ == "__main__":
     gen_items()
     gen_projectiles()
@@ -771,4 +979,5 @@ if __name__ == "__main__":
     gen_misc()
     gen_sounds()
     gen_icons()
+    gen_update_assets()
     print("done")

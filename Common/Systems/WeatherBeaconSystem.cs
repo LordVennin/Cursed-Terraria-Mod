@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -9,7 +10,8 @@ using Terraria.ModLoader.IO;
 
 namespace BagofChaos.Common.Systems
 {
-	// Placeable global weather control. Last beacon placed wins; breaking the active beacon hands control back to vanilla.
+	// Placeable global weather control. Beacons can be toggled on and off by right clicking; the most recently switched-on
+	// beacon wins. When no beacon is on, control returns to Terraria's ordinary weather.
 	public class WeatherBeaconSystem : ModSystem
 	{
 		public const int StyleRain = 0;
@@ -21,59 +23,94 @@ namespace BagofChaos.Common.Systems
 		public const int StyleFrogRain = 6;
 		public const int StyleCount = 7;
 
-		public static int ActiveStyle = -1;
-		public static Point16 ActivePosition = Point16.NegativeOne;
+		public struct Beacon
+		{
+			public Point16 Position;
+			public int Style;
+		}
+
+		// Ordered by activation time: the last entry is the active one.
+		private static readonly List<Beacon> onBeacons = new();
+
+		public static int ActiveStyle => onBeacons.Count > 0 ? onBeacons[^1].Style : -1;
+		public static Point16 ActivePosition => onBeacons.Count > 0 ? onBeacons[^1].Position : Point16.NegativeOne;
 
 		private static int syncTimer;
 
 		public override void ClearWorld() {
-			ActiveStyle = -1;
-			ActivePosition = Point16.NegativeOne;
+			onBeacons.Clear();
 		}
 
 		public override void SaveWorldData(TagCompound tag) {
-			if (ActiveStyle >= 0) {
-				tag["beaconStyle"] = ActiveStyle;
-				tag["beaconX"] = (int)ActivePosition.X;
-				tag["beaconY"] = (int)ActivePosition.Y;
-			}
+			var list = new List<TagCompound>();
+			foreach (Beacon beacon in onBeacons)
+				list.Add(new TagCompound { ["x"] = (int)beacon.Position.X, ["y"] = (int)beacon.Position.Y, ["style"] = beacon.Style });
+			tag["beacons"] = list;
 		}
 
 		public override void LoadWorldData(TagCompound tag) {
-			ActiveStyle = tag.ContainsKey("beaconStyle") ? tag.GetInt("beaconStyle") : -1;
-			ActivePosition = new Point16(tag.GetInt("beaconX"), tag.GetInt("beaconY"));
+			onBeacons.Clear();
+			foreach (TagCompound entry in tag.GetList<TagCompound>("beacons"))
+				onBeacons.Add(new Beacon { Position = new Point16(entry.GetInt("x"), entry.GetInt("y")), Style = entry.GetInt("style") });
 		}
 
 		public override void NetSend(BinaryWriter writer) {
-			writer.Write((sbyte)ActiveStyle);
-			writer.Write(ActivePosition.X);
-			writer.Write(ActivePosition.Y);
+			writer.Write((byte)onBeacons.Count);
+			foreach (Beacon beacon in onBeacons) {
+				writer.Write(beacon.Position.X);
+				writer.Write(beacon.Position.Y);
+				writer.Write((byte)beacon.Style);
+			}
 		}
 
 		public override void NetReceive(BinaryReader reader) {
-			ActiveStyle = reader.ReadSByte();
-			ActivePosition = new Point16(reader.ReadInt16(), reader.ReadInt16());
+			onBeacons.Clear();
+			int count = reader.ReadByte();
+			for (int i = 0; i < count; i++)
+				onBeacons.Add(new Beacon { Position = new Point16(reader.ReadInt16(), reader.ReadInt16()), Style = reader.ReadByte() });
 		}
 
+		private static int IndexOf(int x, int y) => onBeacons.FindIndex(b => b.Position.X == x && b.Position.Y == y);
+
+		/// <summary>Beacon switched on (or freshly placed): it becomes the active one.</summary>
 		public static void BeaconPlacedDirect(int x, int y, int style) {
 			if (Main.netMode == NetmodeID.MultiplayerClient)
 				return;
-			ActiveStyle = style;
-			ActivePosition = new Point16(x, y);
+			int index = IndexOf(x, y);
+			if (index >= 0)
+				onBeacons.RemoveAt(index);
+			onBeacons.Add(new Beacon { Position = new Point16(x, y), Style = style });
 			ApplyWeather(force: true);
 			ChaosEvents.Announce("Beacon" + style, new Color(120, 200, 255));
 			if (Main.netMode == NetmodeID.Server)
 				NetMessage.SendData(MessageID.WorldData);
 		}
 
+		/// <summary>Beacon switched off or broken.</summary>
 		public static void BeaconRemovedDirect(int x, int y) {
 			if (Main.netMode == NetmodeID.MultiplayerClient)
 				return;
-			if (ActivePosition.X != x || ActivePosition.Y != y)
-				return; // not the active one, nothing changes
-			int oldStyle = ActiveStyle;
-			ActiveStyle = -1;
-			ActivePosition = Point16.NegativeOne;
+			int index = IndexOf(x, y);
+			if (index < 0)
+				return;
+			bool wasActive = index == onBeacons.Count - 1;
+			int oldStyle = onBeacons[index].Style;
+			onBeacons.RemoveAt(index);
+			if (wasActive) {
+				ReleaseWeather(oldStyle);
+				if (onBeacons.Count > 0) {
+					ApplyWeather(force: true);
+					ChaosEvents.Announce("Beacon" + ActiveStyle, new Color(120, 200, 255));
+				}
+				else {
+					ChaosEvents.Announce("BeaconRemoved", new Color(120, 200, 255));
+				}
+			}
+			if (Main.netMode == NetmodeID.Server)
+				NetMessage.SendData(MessageID.WorldData);
+		}
+
+		private static void ReleaseWeather(int oldStyle) {
 			// Control returns to Terraria's ordinary weather system. We only clean up what we forced.
 			if (oldStyle == StyleRain || oldStyle == StyleStorm || oldStyle == StyleBlizzard || oldStyle == StyleJellyStorm || oldStyle == StyleFrogRain) {
 				Main.StopRain();
@@ -82,21 +119,21 @@ namespace BagofChaos.Common.Systems
 			else if (oldStyle == StyleSandstorm) {
 				Sandstorm.StopSandstorm();
 			}
-			ChaosEvents.Announce("BeaconRemoved", new Color(120, 200, 255));
-			if (Main.netMode == NetmodeID.Server)
-				NetMessage.SendData(MessageID.WorldData);
 		}
 
 		public override void PostUpdateWorld() {
-			if (ActiveStyle < 0)
+			if (onBeacons.Count == 0)
 				return;
 
-			// Sanity: if the beacon tile vanished without KillMultiTile running (world edits, explosions in odd states), release the override.
-			Tile tile = Framing.GetTileSafely(ActivePosition.X, ActivePosition.Y);
-			if (!tile.HasTile || tile.TileType != ModContent.TileType<Content.Tiles.WeatherBeaconTile>()) {
-				BeaconRemovedDirect(ActivePosition.X, ActivePosition.Y);
-				return;
+			// Sanity: beacons whose tile vanished without KillMultiTile running are dropped.
+			for (int i = onBeacons.Count - 1; i >= 0; i--) {
+				Point16 pos = onBeacons[i].Position;
+				Tile tile = Framing.GetTileSafely(pos.X, pos.Y);
+				if (!tile.HasTile || tile.TileType != ModContent.TileType<Content.Tiles.WeatherBeaconTile>() || tile.TileFrameY >= 36)
+					BeaconRemovedDirect(pos.X, pos.Y);
 			}
+			if (onBeacons.Count == 0)
+				return;
 
 			ApplyWeather(force: false);
 			if (Main.netMode == NetmodeID.Server && ++syncTimer >= 300) {
@@ -127,7 +164,6 @@ namespace BagofChaos.Common.Systems
 						Sandstorm.StopSandstorm();
 					break;
 				case StyleBlizzard:
-					// Blizzards are "rain while in snow with strong wind"; we set the world up and let the biome do the rest.
 					if (!Main.raining || force)
 						Main.StartRain();
 					Main.rainTime = 36000;

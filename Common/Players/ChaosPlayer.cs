@@ -13,7 +13,7 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Common.Players
 {
-	public class ChaosPlayer : ModPlayer
+	public partial class ChaosPlayer : ModPlayer
 	{
 		// ---------------- accessory / armor flags (reset every frame) ----------------
 		public bool InstantUpDown;
@@ -59,7 +59,15 @@ namespace BagofChaos.Common.Players
 
 		// ---------------- glue ----------------
 		public int GluedToNPC = -1;
+		public int GluedToPlayer = -1;
 		public Vector2 GlueOffset;
+		public int GlueTimer; // players come unstuck after 5 seconds
+		public const int GlueDuration = 60 * 5;
+
+		// ---------------- misc buffs ----------------
+		public int WeedyTier = 1;
+		private int prevJump;
+		private bool cloudPlacedThisAir;
 
 		// ---------------- Solid Snake (phasing) ----------------
 		private Vector2 phaseVelocity;
@@ -84,6 +92,7 @@ namespace BagofChaos.Common.Players
 		private int jellyBounceCooldown;
 
 		public override void ResetEffects() {
+			ResetExtras();
 			InstantUpDown = InstantLeftRight = UnreasonableUpDown = UnreasonableLeftRight = OmniMovement = false;
 			SkyInABottle = ThreeDGlasses = ExplosiveHealingKit = TMFlash = LiquidSnake = RocketPack = TextBoxingGloves = false;
 			MuncherHead = MuncherBody = MuncherLegs = MuncherSetBonus = false;
@@ -105,6 +114,7 @@ namespace BagofChaos.Common.Players
 
 		public override void UpdateDead() {
 			GluedToNPC = -1;
+			GluedToPlayer = -1;
 			OmniMomentum = Vector2.Zero;
 			DashTimer = 0;
 			NPCHandTarget = -1;
@@ -126,6 +136,11 @@ namespace BagofChaos.Common.Players
 
 			if (ThreeDGlasses)
 				Player.buffImmune[ModContent.BuffType<ThreeDDebuff>()] = true;
+
+			if (Player.HasBuff<GlueDebuff>())
+				Player.armorEffectDrawOutlines = true; // glued things get a white outline
+
+			PostUpdateEquipsExtras();
 		}
 
 		public override void PostUpdateMiscEffects() {
@@ -135,10 +150,11 @@ namespace BagofChaos.Common.Players
 		}
 
 		public override void PostUpdateRunSpeeds() {
-			if (ChaosEvents.FrogRainActive) {
-				// Everything is ice. Then twice as much ice. Then twice as much again.
+			if (ChaosEvents.FrogRainActive && Player.velocity.Y == 0f) {
+				// On blocks only: everything is ice (no slowing down) and you can run twice as fast on it.
 				Player.runSlowdown *= 0.02f;
-				Player.runAcceleration *= 0.35f;
+				Player.maxRunSpeed *= 2f;
+				Player.accRunSpeed *= 2f;
 			}
 		}
 
@@ -150,10 +166,16 @@ namespace BagofChaos.Common.Players
 			restoreVelocity = false;
 			phasingThisFrame = false;
 
-			if (Player.dead || Player.mount.Active)
+			if (Player.dead)
 				return;
 
-			if (GluedToNPC >= 0 && UpdateGluePosition())
+			if (PreUpdateMovementExtras())
+				return;
+
+			if (Player.mount.Active)
+				return;
+
+			if ((GluedToNPC >= 0 || GluedToPlayer >= 0) && UpdateGluePosition())
 				return;
 
 			if (Player.HasBuff<CardboardBox>()) {
@@ -169,15 +191,40 @@ namespace BagofChaos.Common.Players
 		}
 
 		private bool UpdateGluePosition() {
-			NPC host = Main.npc[GluedToNPC];
-			if (!host.active) {
-				GluedToNPC = -1;
+			// Stuck for 5 seconds, then you come unglued and the debuff goes with it.
+			if (++GlueTimer > GlueDuration) {
+				Unglue();
 				return false;
 			}
-			Player.position = host.position + GlueOffset;
+			Vector2 hostPosition;
+			if (GluedToPlayer >= 0) {
+				Player host = Main.player[GluedToPlayer];
+				if (!host.active || host.dead) {
+					Unglue();
+					return false;
+				}
+				hostPosition = host.position;
+			}
+			else {
+				NPC host = Main.npc[GluedToNPC];
+				if (!host.active) {
+					Unglue();
+					return false;
+				}
+				hostPosition = host.position;
+			}
+			Player.position = hostPosition + GlueOffset;
 			Player.velocity = Vector2.Zero;
 			Player.fallStart = (int)(Player.position.Y / 16f);
 			return true;
+		}
+
+		private void Unglue() {
+			GluedToNPC = -1;
+			GluedToPlayer = -1;
+			GlueTimer = 0;
+			if (Player.HasBuff<GlueDebuff>())
+				Player.ClearBuff(ModContent.BuffType<GlueDebuff>());
 		}
 
 		private void UpdateInstantMovement() {
@@ -424,6 +471,8 @@ namespace BagofChaos.Common.Players
 			if (movementOverridden && restoreVelocity)
 				Player.velocity.Y = restoreVelocityY;
 
+			PostUpdateExtras();
+
 			if (Player.whoAmI != Main.myPlayer || Player.dead)
 				return;
 
@@ -432,6 +481,8 @@ namespace BagofChaos.Common.Players
 
 			if (ChaosEvents.JellyStormActive)
 				UpdateJellyBounce();
+
+			UpdateSkyInABottle();
 
 			UpdateGlueAttachments();
 			UpdateMuncher();
@@ -477,25 +528,34 @@ namespace BagofChaos.Common.Players
 		private void UpdateGlueAttachments() {
 			bool hasGlue = Player.HasBuff<GlueDebuff>();
 			bool onFire = Player.onFire || Player.onFire2 || Player.onFire3 || Player.burned || Player.lavaWet;
-			if (onFire && (hasGlue || GluedToNPC >= 0)) {
-				if (hasGlue)
-					Player.ClearBuff(ModContent.BuffType<GlueDebuff>());
-				GluedToNPC = -1;
+			if (onFire && (hasGlue || GluedToNPC >= 0 || GluedToPlayer >= 0)) {
+				Unglue();
 				return;
 			}
-			if (GluedToNPC >= 0)
+			if (GluedToNPC >= 0 || GluedToPlayer >= 0)
 				return;
+			if (!hasGlue)
+				return;
+			// A glued player sticks to town NPCs and other players (5 seconds). Enemies are too busy to be stuck to.
 			foreach (NPC npc in Main.ActiveNPCs) {
-				// No allegiance checks: a glued player sticks to the Guide, a glued slime carries you off.
-				bool npcGlued = npc.HasBuff<GlueDebuff>();
-				if (!hasGlue && !npcGlued)
+				if (!npc.townNPC && !npc.friendly)
 					continue;
 				if (!npc.Hitbox.Intersects(Player.Hitbox))
 					continue;
 				GluedToNPC = npc.whoAmI;
 				GlueOffset = Player.position - npc.position;
+				GlueTimer = 0;
 				SoundEngine.PlaySound(SoundID.Item16, Player.Center);
-				break;
+				return;
+			}
+			foreach (Player other in Main.ActivePlayers) {
+				if (other.whoAmI == Player.whoAmI || other.dead || !other.Hitbox.Intersects(Player.Hitbox))
+					continue;
+				GluedToPlayer = other.whoAmI;
+				GlueOffset = Player.position - other.position;
+				GlueTimer = 0;
+				SoundEngine.PlaySound(SoundID.Item16, Player.Center);
+				return;
 			}
 		}
 
@@ -630,18 +690,18 @@ namespace BagofChaos.Common.Players
 		}
 
 		// ------------------------------------------------------------------------------------------------------------
-		// Extra jumps: Sky in a Bottle replaces every double jump with a cloud platform.
+		// Sky in a Bottle: a cloud platform appears under your feet when a jump reaches its maximum height.
 		// ------------------------------------------------------------------------------------------------------------
-		public override void ModifyExtraJumpDurationMultiplier(ExtraJump jump, ref float duration) {
-			if (SkyInABottle)
-				duration = 0f;
-		}
-
-		public override void OnExtraJumpStarted(ExtraJump jump, ref bool playSound) {
-			if (!SkyInABottle)
+		private void UpdateSkyInABottle() {
+			bool grounded = Player.velocity.Y == 0f;
+			if (grounded)
+				cloudPlacedThisAir = false;
+			// Player.jump counts down while the jump button is held; it hitting 0 mid-air means the jump just peaked.
+			bool peaked = prevJump > 0 && Player.jump == 0 && !grounded && Player.velocity.Y <= 0f;
+			prevJump = Player.jump;
+			if (!SkyInABottle || !peaked || cloudPlacedThisAir || Player.mount.Active)
 				return;
-			playSound = false;
-			Player.jump = 0;
+			cloudPlacedThisAir = true;
 			Player.velocity.Y = 0f;
 			int tileY = (int)((Player.position.Y + Player.height + 1f) / 16f);
 			int tileX = (int)(Player.Center.X / 16f);
@@ -657,6 +717,8 @@ namespace BagofChaos.Common.Players
 		}
 
 		public override bool CanBeHitByNPC(NPC npc, ref int cooldownSlot) {
+			if (Stalemate)
+				return false;
 			// Being carried around by a glued zombie is bad enough without it also biting you every frame.
 			return GluedToNPC != npc.whoAmI;
 		}
@@ -669,10 +731,16 @@ namespace BagofChaos.Common.Players
 				return;
 			float mirrorY = Main.LocalPlayer.Bottom.Y;
 			Vector2 center = Player.Center + new Vector2(0f, Player.gfxOffY);
-			Vector2 mirroredCenter = new Vector2(center.X, 2f * mirrorY - center.Y);
-			Vector2 position = mirroredCenter - Player.Size * 0.5f;
-			// A half turn is a vertical flip plus a horizontal flip; close enough to a reflection for a drunk.
-			Main.PlayerRenderer.DrawPlayer(camera, Player, position, Player.fullRotation + MathHelper.Pi, Player.Size * 0.5f, 0.45f);
+			int tiers = Math.Max(1, Main.LocalPlayer.GetModPlayer<ChaosPlayer>().WeedyTier);
+			for (int t = 0; t < tiers; t++) {
+				// Every extra beer adds another, wobblier, further-away twin.
+				float wobble = (float)Math.Sin(Main.GameUpdateCount * 0.03f * (t + 1)) * 24f * t;
+				Vector2 mirroredCenter = new Vector2(center.X + wobble, 2f * mirrorY - center.Y + t * 28f);
+				Vector2 position = mirroredCenter - Player.Size * 0.5f;
+				float rotation = Player.fullRotation + MathHelper.Pi + (float)Math.Sin(Main.GameUpdateCount * 0.05f + t) * 0.15f * t;
+				// A half turn is a vertical flip plus a horizontal flip; close enough to a reflection for a drunk.
+				Main.PlayerRenderer.DrawPlayer(camera, Player, position, rotation, Player.Size * 0.5f, 0.45f + 0.08f * t);
+			}
 		}
 	}
 
