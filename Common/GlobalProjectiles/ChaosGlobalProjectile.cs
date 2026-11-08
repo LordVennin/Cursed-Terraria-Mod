@@ -68,6 +68,13 @@ namespace BagofChaos.Common.GlobalProjectiles
 		}
 
 		public override void OnSpawn(Projectile projectile, IEntitySource source) {
+			// Anything a boss-copied shot spawns (stars, shards, splits) is the boss's too.
+			if (source is EntitySource_Parent { Entity: Projectile parent } && parent.TryGetGlobalProjectile(out ChaosGlobalProjectile parentGlobal) && parentGlobal.BossCopy) {
+				BossCopy = true;
+				projectile.friendly = false;
+				projectile.hostile = true;
+				return;
+			}
 			ChaosPlayer owner = Owner(projectile);
 			if (owner == null || projectile.npcProj || projectile.trap)
 				return;

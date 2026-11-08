@@ -184,10 +184,22 @@ namespace BagofChaos
 				case MessageType.KillProjectile: {
 					int identity = reader.ReadInt16();
 					int owner = reader.ReadByte();
-					if (Main.netMode == NetmodeID.Server) {
-						int index = Projectile.GetByUUID(owner, identity);
-						if (index >= 0 && index < Main.maxProjectiles && Main.projectile[index].active)
-							Main.projectile[index].Kill();
+					if (Main.netMode == NetmodeID.Server && owner < Main.maxPlayers) {
+						// Another player's projectile: only its owner can really remove it, so pass the request on.
+						ModPacket packet = GetPacket();
+						packet.Write((byte)MessageType.KillProjectile);
+						packet.Write((short)identity);
+						packet.Write((byte)owner);
+						packet.Send(owner);
+					}
+					else if (Main.netMode == NetmodeID.Server || owner == Main.myPlayer) {
+						// Server-owned (NPC/trap) projectiles are killed on the server; the kill is broadcast from there.
+						foreach (Projectile p in Main.ActiveProjectiles) {
+							if (p.owner == owner && p.identity == identity) {
+								p.Kill();
+								break;
+							}
+						}
 					}
 					break;
 				}
@@ -221,7 +233,7 @@ namespace BagofChaos
 			}
 		}
 
-		/// <summary>Removes a projectile everywhere, even one owned by the server or another player.</summary>
+		/// <summary>Removes a projectile everywhere: the server kills its own (NPC/trap) projectiles, other players' go to their owner.</summary>
 		internal static void SendKillProjectile(Projectile projectile) {
 			if (Main.netMode == NetmodeID.MultiplayerClient && projectile.owner != Main.myPlayer) {
 				ModPacket packet = Instance.GetPacket();

@@ -44,13 +44,15 @@ namespace BagofChaos.Common.Players
 				return false;
 			if (Main.projPet[p.type] || p.minion || p.sentry || p.aiStyle == ProjAIStyleID.Hook)
 				return false;
-			if (p.owner == Player.whoAmI) {
-				// Never grab what you're currently holding or swinging.
-				if (Player.heldProj == p.whoAmI || p.ownerHitCheck || ProjectileID.Sets.IsAWhip[p.type])
+			if (p.owner < Main.maxPlayers) {
+				// Never grab what anyone (you or a teammate) is currently holding, swinging or channeling.
+				if (p.owner == Player.whoAmI && Player.heldProj == p.whoAmI)
+					return false;
+				if (p.ownerHitCheck || ProjectileID.Sets.IsAWhip[p.type])
 					return false;
 				int ai = p.aiStyle;
 				if (ai == ProjAIStyleID.Yoyo || ai == ProjAIStyleID.Flail || ai == ProjAIStyleID.Spear || ai == ProjAIStyleID.Drill
-					|| ai == ProjAIStyleID.HeldProjectile || ai == ProjAIStyleID.ShortSword)
+					|| ai == ProjAIStyleID.HeldProjectile || ai == ProjAIStyleID.ShortSword || ai == ProjAIStyleID.Boomerang)
 					return false;
 			}
 			return true;

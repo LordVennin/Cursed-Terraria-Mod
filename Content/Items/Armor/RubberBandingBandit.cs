@@ -31,9 +31,17 @@ namespace BagofChaos.Content.Items.Armor
 
 		public override void UpdateArmorSet(Player player) {
 			player.setBonus = SetBonusText.Value;
-			if (this is RubberBandingBanditWarpaint) {
-				var keys = Common.Systems.ChaosKeybinds.WarpaintMagnet?.GetAssignedKeys();
-				string key = keys != null && keys.Count > 0 ? keys[0] : Language.GetTextValue("Mods.BagofChaos.Keybinds.Unbound");
+			// The set bonus text is only ever shown to the local player. Keybinds don't exist on a dedicated server
+			// (reading them there throws), so never touch them outside the local client.
+			if (this is RubberBandingBanditWarpaint && !Main.dedServ && player.whoAmI == Main.myPlayer) {
+				string key = Language.GetTextValue("Mods.BagofChaos.Keybinds.Unbound");
+				try {
+					var keys = Common.Systems.ChaosKeybinds.WarpaintMagnet?.GetAssignedKeys();
+					if (keys != null && keys.Count > 0)
+						key = keys[0];
+				}
+				catch (System.Collections.Generic.KeyNotFoundException) {
+				}
 				player.setBonus += "\n" + WarpaintBonusText.Format(key);
 			}
 			player.GetModPlayer<ChaosPlayer>().BanditSetBonus = true;

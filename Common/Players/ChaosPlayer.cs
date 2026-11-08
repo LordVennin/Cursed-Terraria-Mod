@@ -552,7 +552,7 @@ namespace BagofChaos.Common.Players
 				return;
 			// A glued player sticks to town NPCs and other players (5 seconds). Enemies are too busy to be stuck to.
 			foreach (NPC npc in Main.ActiveNPCs) {
-				if (!npc.townNPC && !npc.friendly)
+				if (!npc.townNPC && !npc.friendly || npc.GetGlobalNPC<Common.GlobalNPCs.ChaosGlobalNPC>().RemoteGhost)
 					continue;
 				if (!npc.Hitbox.Intersects(Player.Hitbox))
 					continue;

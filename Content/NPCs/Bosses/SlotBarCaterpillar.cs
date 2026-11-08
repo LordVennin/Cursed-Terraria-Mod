@@ -86,8 +86,10 @@ namespace BagofChaos.Content.NPCs.Bosses
 			if (sample.minion || sample.sentry || Main.projPet[type] || ProjectileID.Sets.IsAWhip[type] || ProjectileID.Sets.Explosive[type] || sample.ownerHitCheck)
 				return false;
 			int ai = sample.aiStyle;
+			// No boomerangs (they fly back to their owner) and no falling sand/blocks (they place tiles).
 			return ai != ProjAIStyleID.Hook && ai != ProjAIStyleID.Yoyo && ai != ProjAIStyleID.Flail && ai != ProjAIStyleID.Spear && ai != ProjAIStyleID.Drill
-				&& ai != ProjAIStyleID.HeldProjectile && ai != ProjAIStyleID.ShortSword && ai != ProjAIStyleID.Explosive;
+				&& ai != ProjAIStyleID.HeldProjectile && ai != ProjAIStyleID.ShortSword && ai != ProjAIStyleID.Explosive
+				&& ai != ProjAIStyleID.Boomerang && ai != ProjAIStyleID.FallingTile;
 		}
 
 		private ref float WeaponTimer => ref NPC.localAI[0];
@@ -126,7 +128,8 @@ namespace BagofChaos.Content.NPCs.Bosses
 			int damage = Math.Clamp(item.damage, 20, 80);
 			if (CanReplicate(item)) {
 				Vector2 velocity = (target.Center - from).SafeNormalize(Vector2.UnitX) * Math.Max(8f, item.shootSpeed);
-				int index = Projectile.NewProjectile(NPC.GetSource_FromAI(), from, velocity, item.shoot, damage, item.knockBack, Main.myPlayer);
+				// Owned by nobody (255), like a trap's shot, so no player's own logic ever treats it as theirs.
+				int index = Projectile.NewProjectile(NPC.GetSource_FromAI(), from, velocity, item.shoot, damage, item.knockBack, Main.maxPlayers);
 				if (index >= 0 && index < Main.maxProjectiles) {
 					Projectile shot = Main.projectile[index];
 					shot.GetGlobalProjectile<Common.GlobalProjectiles.ChaosGlobalProjectile>().BossCopy = true;
