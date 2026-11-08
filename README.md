@@ -120,6 +120,44 @@ Slot-bar Caterpillar (Slot Machine Token), Chaotic Slime (Chaotic Gel). Expert t
 * ",.," really does crash the game when killed, as requested. It can only be killed between 3:21 and 3:24 AM on a full moon.
 * The Screaming Flinx uses a synthesized scream; a certain cartoon cat's scream is copyrighted.
 
+## Update 4 (tester feedback)
+
+### Load errors and crashes fixed
+* Missing `_Head_Boss` / `_Highlight` textures (Slot-bar Caterpillar, Chaotic Slime, Zombie CEO, both dehydrators, weather beacons).
+* All three mounts would have crashed the client right after that (no `_Back` texture); "Harpy" Wings is now a wing accessory instead.
+* Compressed Life Crystal / Mana Crystal / Life Fruit froze the game (an endless loop). They now set the vanilla progression counters
+  (400 life, 200 mana, 500 life with golden hearts), never lower anything, and after that are free potions forever.
+
+### Reworked
+* **Pong Power** paddles are horizontal; **Green Pong Power** has two on top and two on the bottom. **Balls of Confetti** fly straight through enemies.
+* **Glue Bat** glues you to itself, Cave Bat damage. **Spider on a Ball** is a ground pet on the Clown's Happy Bomb, spinning much faster.
+  **Balls of Spiders** leave a fading trail of little spiders.
+* **Succ.** gives one full-strength shove per click toward you (stacks with momentum, no cap, no teleport).
+* **Rubber Banding Bandit**: 5 tile bounces at -10% damage each, snap-homing after an enemy hit (a wall hit switches it off).
+  Warpaint set bonus: press the "projectile magnet" key (default V) to pull in every projectile within 6 tiles for 5 s and fire them back
+  as your own (45 s cooldown).
+* **Tanning Mirror** turns minions into pinballs inside the cone, with a bumper floor above your head.
+* **Triforces** really convert damage classes now (weapon, ammo and projectiles), show the class in the item name, and only the
+  pieces cost 10%. The Complete Triforce cycles Melee / Ranged / Magic / Summoner and lights the matching segment.
+* **Snail Flails** work in multiplayer, can't hit snails, and Hot Snail Flail is now Magma Snail Flail.
+* **NPC tools** work with the NPC dead or absent (an invisible stand-in, never saved). Shopkeeper's (Merchant, at the beach, 10 gold),
+  Goblin' Your Money (after a reforge, 50 gold), Snipping Tool (after a haircut, 20 gold), Angler's Pocketguide (every 5th quest).
+  NPC Directory = all five at a Tinkerer's Workshop and lists everyone who ever moved in.
+* **Rat Tacks**: vanilla mice as stationary traps, 3 bites or 30 s each, 20 max (oldest leave first), mode switch updates every rat.
+* **Axe Me a Question / Lots of Questions** fell any tree they touch. **Rat Cart** goes in the minecart slot. **Sharkboard** swims.
+* **Fart Reverb.mp4**: 50% over 14 s, then 100% at exactly 15 s; hurts other players too. **Touch Grass** stops while airborne.
+* **Nagel und Hammer** (hammer + rapid nails, 15-stack combo) and its upgrade **Geschmolzener Nagel und Hammer** (molten boomerang hammer).
+* **Stacks of Fish** is a tower of goldfish that shoot goldfish. **Hollow Block** places in mid-air, 1 Forbidden Fragment = 500.
+* **Crushed Dirt** really lights dirt like a torch; **Crushed Glass** hides anything made from glass or sand (cached from recipes). Both 10 min.
+* **Chaotic Boxes**: hold to use, the weapon in hand changes every half second. **Slotter Pillar / Slotting Pillar** no longer need the inventory open.
+* **Rat Package Co.** row: nine light-brown slots beside the trash can (under the chest when one is open). A tenth-slot item is given back.
+* **Slot-bar Caterpillar** copies your hotbar as a picture (no more item stealing), half defense, and uses one of your weapons every 15 s.
+* **Shlue** is two vanilla glue slimes with googly eyes on top, and has a lot more to say. **Spinning Worm / Screaming Flinx** actually fall now.
+
+### New
+**Wob** (a bow, backwards), **Slam Dunker** (basketball hoop sentry; right click near a ball to dunk it for a homing swarm),
+**Ocean in a Fishbowl** (air is water: swim everywhere, drown without gills).
+
 ## Config
 Client side: toggle/intensity for the 3D effect, toggle/radius for TM Flash darkness, Zombie Salesman icon takeover, and whether the
 Fart Reverb launches players.

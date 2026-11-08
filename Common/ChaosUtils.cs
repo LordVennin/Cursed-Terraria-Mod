@@ -97,14 +97,32 @@ namespace BagofChaos.Common
 			}
 		}
 
-		// Succ.: the local player gets yanked to the user if they are on the user's screen.
+		public const float SuccStrength = 24f;
+
+		public static void PushNPC(NPC npc, Vector2 impulse) {
+			npc.velocity += impulse;
+			npc.netUpdate = true;
+		}
+
+		/// <summary>
+		/// One Succ. click: a constant-strength impulse toward the user. Far targets are lobbed (aimed above the user) so gravity
+		/// and ground friction don't stop them halfway; the strength is the same at any distance.
+		/// </summary>
+		public static Vector2 SuccImpulse(Vector2 from, Vector2 to) {
+			Vector2 delta = to - from;
+			Vector2 aim = delta + new Vector2(0f, -System.Math.Abs(delta.X) * 0.35f);
+			return aim.SafeNormalize(-Vector2.UnitY) * SuccStrength;
+		}
+
+		// Succ.: the local player gets shoved toward the user if they are on the user's screen.
 		public static void SuccLocalPlayer(int sourcePlayer, Vector2 position) {
 			Player player = Main.LocalPlayer;
 			if (player.whoAmI == sourcePlayer || player.dead || !player.active)
 				return;
 			if (Vector2.Distance(player.Center, position) > 1400f)
 				return;
-			player.Teleport(position - player.Size * 0.5f + new Vector2(Main.rand.NextFloat(-24f, 24f), 0f), 1);
+			player.velocity += SuccImpulse(player.Center, position);
+			player.fallStart = (int)(player.position.Y / 16f);
 			SoundEngine.PlaySound(SoundID.Item24, player.Center);
 		}
 

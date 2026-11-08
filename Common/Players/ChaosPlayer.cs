@@ -169,6 +169,9 @@ namespace BagofChaos.Common.Players
 			if (Player.dead)
 				return;
 
+			UpdateHarpyGlide();
+			UpdateFishbowlWater();
+
 			if (PreUpdateMovementExtras())
 				return;
 
@@ -460,6 +463,7 @@ namespace BagofChaos.Common.Players
 		// After vanilla movement
 		// ------------------------------------------------------------------------------------------------------------
 		public override void PostUpdate() {
+			UpdateFishbowlBreath();
 			if (phasingThisFrame) {
 				Player.position = phaseTargetPosition;
 				Player.velocity = Vector2.Zero;
@@ -523,6 +527,16 @@ namespace BagofChaos.Common.Players
 			Player.fallStart = (int)(Player.position.Y / 16f);
 			jellyBounceCooldown = 8;
 			SoundEngine.PlaySound(SoundID.NPCHit1 with { Pitch = 0.6f }, Player.Center);
+		}
+
+		/// <summary>Sticks this player to an NPC for the glue duration (used by enemies that glue you to themselves).</summary>
+		public void GlueToNPC(NPC npc) {
+			if (GluedToNPC >= 0 || GluedToPlayer >= 0 || Player.dead)
+				return;
+			GluedToNPC = npc.whoAmI;
+			GlueOffset = Player.position - npc.position;
+			GlueTimer = 0;
+			SoundEngine.PlaySound(SoundID.Item16, Player.Center);
 		}
 
 		private void UpdateGlueAttachments() {

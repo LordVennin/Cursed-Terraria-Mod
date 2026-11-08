@@ -10,9 +10,11 @@ namespace BagofChaos.Content.Items.Armor
 	public abstract class BanditHelmet : ModItem
 	{
 		public static LocalizedText SetBonusText { get; private set; }
+		public static LocalizedText WarpaintBonusText { get; private set; }
 
 		public override void SetStaticDefaults() {
 			SetBonusText ??= Language.GetText("Mods.BagofChaos.Items.RubberBandingBanditSuit.SetBonus");
+			WarpaintBonusText ??= Language.GetText("Mods.BagofChaos.Items.RubberBandingBanditWarpaint.SetBonus");
 		}
 
 		public override void SetDefaults() {
@@ -29,6 +31,11 @@ namespace BagofChaos.Content.Items.Armor
 
 		public override void UpdateArmorSet(Player player) {
 			player.setBonus = SetBonusText.Value;
+			if (this is RubberBandingBanditWarpaint) {
+				var keys = Common.Systems.ChaosKeybinds.WarpaintMagnet?.GetAssignedKeys();
+				string key = keys != null && keys.Count > 0 ? keys[0] : Language.GetTextValue("Mods.BagofChaos.Keybinds.Unbound");
+				player.setBonus += "\n" + WarpaintBonusText.Format(key);
+			}
 			player.GetModPlayer<ChaosPlayer>().BanditSetBonus = true;
 		}
 

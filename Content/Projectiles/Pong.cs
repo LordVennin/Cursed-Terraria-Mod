@@ -10,13 +10,15 @@ namespace BagofChaos.Content.Projectiles
 	// Paddles follow your cursor at the edges of the screen. Balls bounce between them and grow every bounce.
 	// Five paddle bounces per ball, then it pops. Miss the ball and it's gone. Scales with summon damage.
 	//
-	// Paddle ai[0]: 0 top, 1 bottom, 2 left, 3 right. ai[1]: 1 = green (longer).
+	// Every paddle is horizontal. Paddle ai[0]: 0 top, 1 bottom, 2 top (mirrored), 3 bottom (mirrored). ai[1]: 1 = green (longer).
+	// Green Pong has all four: one pair follows the cursor, the other pair mirrors it around the player.
 	public class PongPaddle : ModProjectile
 	{
 		public const float EdgeOffset = 50f + 32f; // 2 blocks closer to the player than the original 50px
 		public int Side => (int)Projectile.ai[0];
 		public bool Green => Projectile.ai[1] == 1f;
-		public bool Vertical => Side >= 2;
+		public bool Top => Side % 2 == 0;
+		public bool Mirrored => Side >= 2;
 
 		public override void SetStaticDefaults() {
 			Main.projPet[Type] = true;
@@ -24,8 +26,8 @@ namespace BagofChaos.Content.Projectiles
 		}
 
 		public override void SetDefaults() {
-			Projectile.width = 12;
-			Projectile.height = 180;
+			Projectile.width = 180;
+			Projectile.height = 12;
 			Projectile.friendly = true;
 			Projectile.minion = true;
 			Projectile.minionSlots = 0f;
@@ -52,21 +54,15 @@ namespace BagofChaos.Content.Projectiles
 				Projectile.timeLeft = 2;
 
 			int length = Green ? 220 : 180;
-			if (Vertical)
-				Projectile.Resize(length, 12);
-			else
-				Projectile.Resize(12, length);
+			Projectile.Resize(length, 12);
 
 			float halfW = Main.screenWidth / 2f / Main.GameViewMatrix.Zoom.X;
 			float halfH = Main.screenHeight / 2f / Main.GameViewMatrix.Zoom.Y;
 			Vector2 mouse = Projectile.owner == Main.myPlayer ? Main.MouseWorld : owner.Center + new Vector2(owner.direction * 200f, 0f);
-			Vector2 target = Side switch {
-				0 => new Vector2(mouse.X, owner.Center.Y - halfH + EdgeOffset),
-				1 => new Vector2(mouse.X, owner.Center.Y + halfH - EdgeOffset),
-				2 => new Vector2(owner.Center.X - halfW + EdgeOffset, mouse.Y),
-				_ => new Vector2(owner.Center.X + halfW - EdgeOffset, mouse.Y),
-			};
-			Projectile.rotation = Vertical ? 0f : MathHelper.PiOver2;
+			float x = Mirrored ? owner.Center.X * 2f - mouse.X : mouse.X;
+			x = MathHelper.Clamp(x, owner.Center.X - halfW + length / 2f, owner.Center.X + halfW - length / 2f);
+			Vector2 target = new Vector2(x, Top ? owner.Center.Y - halfH + EdgeOffset : owner.Center.Y + halfH - EdgeOffset);
+			Projectile.rotation = MathHelper.PiOver2;
 			Projectile.Center = Vector2.Lerp(Projectile.Center, target, 0.35f);
 			Projectile.velocity = Vector2.Zero;
 			if (Projectile.owner == Main.myPlayer && Main.GameUpdateCount % 10 == 0)
@@ -76,15 +72,14 @@ namespace BagofChaos.Content.Projectiles
 		public override bool PreDraw(ref Color lightColor) {
 			var texture = Terraria.GameContent.TextureAssets.Projectile[Type].Value;
 			Color color = Green ? Color.LimeGreen : Color.White;
-			float scaleY = Projectile.height / (float)texture.Height;
-			if (Vertical)
-				scaleY = Projectile.width / (float)texture.Height;
-			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, null, color, Vertical ? MathHelper.PiOver2 : 0f, texture.Size() * 0.5f, new Vector2(1f, scaleY), Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 0);
+			// The sprite is a vertical bar; turn it on its side and stretch it to the paddle length.
+			float scaleY = Projectile.width / (float)texture.Height;
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, null, color, MathHelper.PiOver2, texture.Size() * 0.5f, new Vector2(1f, scaleY), Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 0);
 			return false;
 		}
 	}
 
-	// Ball ai[0]: bounces so far. ai[1]: 1 = green (side paddles exist, double speed).
+	// Ball ai[0]: bounces so far. ai[1]: 1 = green (double speed).
 	public class PongBall : ModProjectile
 	{
 		public const int MaxBounces = 5;
@@ -123,20 +118,11 @@ namespace BagofChaos.Content.Projectiles
 					continue;
 				if (!paddle.Hitbox.Intersects(Projectile.Hitbox))
 					continue;
-				int side = (int)paddle.ai[0];
-				bool reflected = false;
-				if (side == 0 && Projectile.velocity.Y < 0f || side == 1 && Projectile.velocity.Y > 0f) {
-					Projectile.velocity.Y *= -1f;
-					Projectile.velocity.X += (Projectile.Center.X - paddle.Center.X) * 0.1f;
-					reflected = true;
-				}
-				else if (side == 2 && Projectile.velocity.X < 0f || side == 3 && Projectile.velocity.X > 0f) {
-					Projectile.velocity.X *= -1f;
-					Projectile.velocity.Y += (Projectile.Center.Y - paddle.Center.Y) * 0.1f;
-					reflected = true;
-				}
-				if (!reflected)
+				bool top = (int)paddle.ai[0] % 2 == 0;
+				if (!(top && Projectile.velocity.Y < 0f || !top && Projectile.velocity.Y > 0f))
 					continue;
+				Projectile.velocity.Y *= -1f;
+				Projectile.velocity.X += (Projectile.Center.X - paddle.Center.X) * 0.05f;
 				Projectile.velocity *= 1.06f;
 				Bounces++;
 				Projectile.damage += Projectile.originalDamage / 4;
@@ -148,7 +134,7 @@ namespace BagofChaos.Content.Projectiles
 				}
 			}
 
-			// Off the owner's screen = you missed. Game over for the ball. (Side edges only bounce when there are no side paddles.)
+			// Off the top or bottom of the owner's screen = you missed. The side edges are walls.
 			float halfW = Main.screenWidth / 2f / Main.GameViewMatrix.Zoom.X;
 			float halfH = Main.screenHeight / 2f / Main.GameViewMatrix.Zoom.Y;
 			if (Projectile.Center.Y < owner.Center.Y - halfH - 40f || Projectile.Center.Y > owner.Center.Y + halfH + 40f) {
@@ -156,13 +142,7 @@ namespace BagofChaos.Content.Projectiles
 				return;
 			}
 			bool offLeft = Projectile.Center.X < owner.Center.X - halfW, offRight = Projectile.Center.X > owner.Center.X + halfW;
-			if (Green) {
-				if (Projectile.Center.X < owner.Center.X - halfW - 40f || Projectile.Center.X > owner.Center.X + halfW + 40f) {
-					Miss(owner);
-					return;
-				}
-			}
-			else if (offLeft && Projectile.velocity.X < 0f || offRight && Projectile.velocity.X > 0f) {
+			if (offLeft && Projectile.velocity.X < 0f || offRight && Projectile.velocity.X > 0f) {
 				Projectile.velocity.X *= -1f;
 			}
 

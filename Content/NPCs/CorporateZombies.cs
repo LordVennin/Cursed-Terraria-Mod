@@ -110,6 +110,7 @@ namespace BagofChaos.Content.NPCs
 		private int shoutTimer;
 
 		public override string Texture => "Terraria/Images/NPC_" + NPCID.Zombie;
+		public override string BossHeadTexture => "BagofChaos/Content/NPCs/ZombieCEO_Head_Boss";
 
 		public override void SetStaticDefaults() {
 			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.Zombie];

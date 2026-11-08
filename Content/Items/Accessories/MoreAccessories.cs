@@ -1,6 +1,7 @@
 using System;
 using BagofChaos.Common.Players;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -10,6 +11,8 @@ namespace BagofChaos.Content.Items.Accessories
 {
 	// ---------------------------------------------------------------------------------------------------------------
 	// Triforce pieces: convert damage types. Hardmode, pre-mech.
+	// Conversion is real: the weapon (and its ammo and projectiles) becomes the new class, so the new class's bonuses
+	// apply and the old class's don't. See ChaosPlayer.Round4 / TriforceGlobalItem.
 	// ---------------------------------------------------------------------------------------------------------------
 	public abstract class TriforcePiece : ChaosAccessory
 	{
@@ -19,7 +22,7 @@ namespace BagofChaos.Content.Items.Accessories
 
 	public class TriforceOfWisdom : TriforcePiece
 	{
-		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceMode = DamageConversion.Magic;
+		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceSources.Add(DamageConversion.Magic);
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.SoulofLight, 10).AddIngredient(ItemID.Sapphire, 3).AddIngredient(ItemID.CrystalShard, 10).AddTile(TileID.MythrilAnvil).Register();
@@ -28,7 +31,7 @@ namespace BagofChaos.Content.Items.Accessories
 
 	public class TriforceOfPower : TriforcePiece
 	{
-		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceMode = DamageConversion.Melee;
+		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceSources.Add(DamageConversion.Melee);
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.SoulofNight, 10).AddIngredient(ItemID.Ruby, 3).AddIngredient(ItemID.CrystalShard, 10).AddTile(TileID.MythrilAnvil).Register();
@@ -37,22 +40,41 @@ namespace BagofChaos.Content.Items.Accessories
 
 	public class TriforceOfCourage : TriforcePiece
 	{
-		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceMode = DamageConversion.Ranged;
+		public override void UpdateAccessory(Player player, bool hideVisual) => Chaos(player).TriforceSources.Add(DamageConversion.Ranged);
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.SoulofFlight, 10).AddIngredient(ItemID.Emerald, 3).AddIngredient(ItemID.CrystalShard, 10).AddTile(TileID.MythrilAnvil).Register();
 		}
 	}
 
-	// All vanilla damage bonuses apply to every class; right click the item to pick which class everything becomes.
+	// Every vanilla damage class becomes the one you pick (right click to cycle Melee, Ranged, Magic, Summoner). No penalty.
+	// Only the matching segment of the sprite lights up: red top (melee), blue lower left (magic), green lower right (ranged).
+	// Summoner turns the whole thing gold.
 	public class CompleteTriforceOfHyrule : TriforcePiece
 	{
 		protected override int Rarity => ItemRarityID.Yellow;
 
 		public override void UpdateAccessory(Player player, bool hideVisual) {
 			ChaosPlayer chaos = Chaos(player);
-			chaos.TriforceMode = chaos.HyruleMode;
 			chaos.CompleteTriforce = true;
+		}
+
+		private static Texture2D ModeTexture() {
+			DamageConversion mode = Main.gameMenu ? DamageConversion.Melee : Main.LocalPlayer.GetModPlayer<ChaosPlayer>().HyruleMode;
+			return ModContent.Request<Texture2D>("BagofChaos/Content/Items/Accessories/CompleteTriforce_" + mode).Value;
+		}
+
+		public override bool PreDrawInInventory(SpriteBatch spriteBatch, Vector2 position, Rectangle frame, Color drawColor, Color itemColor, Vector2 origin, float scale) {
+			Texture2D texture = ModeTexture();
+			spriteBatch.Draw(texture, position, texture.Bounds, drawColor, 0f, texture.Size() * 0.5f, scale, SpriteEffects.None, 0f);
+			return false;
+		}
+
+		public override bool PreDrawInWorld(SpriteBatch spriteBatch, Color lightColor, Color alphaColor, ref float rotation, ref float scale, int whoAmI) {
+			Texture2D texture = ModeTexture();
+			Vector2 center = Item.Center - Main.screenPosition;
+			spriteBatch.Draw(texture, center, null, lightColor, rotation, texture.Size() * 0.5f, scale, SpriteEffects.None, 0f);
+			return false;
 		}
 
 		public override bool CanRightClick() => true;
@@ -62,10 +84,10 @@ namespace BagofChaos.Content.Items.Accessories
 		public override void RightClick(Player player) {
 			ChaosPlayer chaos = Chaos(player);
 			chaos.HyruleMode = chaos.HyruleMode switch {
-				DamageConversion.Magic => DamageConversion.Melee,
 				DamageConversion.Melee => DamageConversion.Ranged,
-				DamageConversion.Ranged => DamageConversion.Summon,
-				_ => DamageConversion.Magic,
+				DamageConversion.Ranged => DamageConversion.Magic,
+				DamageConversion.Magic => DamageConversion.Summon,
+				_ => DamageConversion.Melee,
 			};
 			Color color = chaos.HyruleMode switch { DamageConversion.Magic => Color.DeepSkyBlue, DamageConversion.Melee => Color.OrangeRed, DamageConversion.Ranged => Color.LimeGreen, _ => Color.Gold };
 			Main.NewText(Terraria.Localization.Language.GetTextValue("Mods.BagofChaos.Items.CompleteTriforceOfHyrule.Mode" + chaos.HyruleMode), color);
@@ -197,6 +219,11 @@ namespace BagofChaos.Content.Items.Accessories
 		public override void UpdateAccessory(Player player, bool hideVisual) {
 			ChaosPlayer chaos = player.GetModPlayer<ChaosPlayer>();
 			chaos.SpiderWings = true;
+			// A fading trail of little spiders while airborne, like vanilla wing particles.
+			if (!hideVisual && !Main.dedServ && player.velocity.Y != 0f && !player.mount.Active && Main.rand.NextBool(2)) {
+				Vector2 from = player.Center + new Vector2(-player.direction * 10f, Main.rand.NextFloat(-8f, 8f));
+				Dust.NewDustPerfect(from, ModContent.DustType<Dusts.SpiderDust>(), new Vector2(-player.velocity.X * 0.15f + Main.rand.NextFloat(-0.6f, 0.6f), Main.rand.NextFloat(0.2f, 1.2f)));
+			}
 		}
 	}
 }

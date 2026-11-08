@@ -143,11 +143,11 @@ namespace BagofChaos.Content.Items.Consumables
 			base.SetDefaults();
 			Item.rare = ItemRarityID.Blue;
 			Item.buffType = ModContent.BuffType<CrushedGlass>();
-			Item.buffTime = 60 * 60 * 15;
+			Item.buffTime = 60 * 60 * 10;
 		}
 
 		public override void AddRecipes() {
-			CreateRecipe().AddIngredient(ItemID.Bottle).AddIngredient(ItemID.Glass, 5).AddIngredient(ItemID.SandBlock, 5).AddTile(TileID.Bottles).Register();
+			CreateRecipe().AddIngredient(ItemID.Bottle).AddIngredient(ItemID.Glass).AddIngredient(ItemID.SandBlock).AddTile(TileID.Bottles).Register();
 		}
 	}
 
@@ -158,11 +158,11 @@ namespace BagofChaos.Content.Items.Consumables
 			base.SetDefaults();
 			Item.rare = ItemRarityID.Blue;
 			Item.buffType = ModContent.BuffType<CrushedDirt>();
-			Item.buffTime = 60 * 60 * 5;
+			Item.buffTime = 60 * 60 * 10;
 		}
 
 		public override void AddRecipes() {
-			CreateRecipe().AddIngredient(ItemID.Bottle).AddIngredient(ItemID.DirtBlock, 10).AddIngredient(ItemID.Moonglow).AddIngredient(ItemID.MudBlock, 5).AddTile(TileID.Bottles).Register();
+			CreateRecipe().AddIngredient(ItemID.Bottle).AddIngredient(ItemID.DirtBlock).AddIngredient(ItemID.Moonglow).AddIngredient(ItemID.MudBlock).AddTile(TileID.Bottles).Register();
 		}
 	}
 
@@ -209,15 +209,18 @@ namespace BagofChaos.Content.Items.Consumables
 			return true;
 		}
 
-		public override bool ConsumeItem(Player player) => !IsMaxed(player); // once maxed it is an infinite potion
+		// Never used up: the first use maxes the stat, every use after that is a free potion.
+		public override bool ConsumeItem(Player player) => false;
 	}
 
 	public class CompressedLifeCrystal : CompressedStat
 	{
-		protected override bool IsMaxed(Player player) => player.ConsumedLifeCrystals >= Player.LifeCrystalMax;
+		// The vanilla counters only ever go up here, so stats already above the target are never reduced.
+		protected override bool IsMaxed(Player player) => player.ConsumedLifeCrystals >= Player.LifeCrystalMax || player.statLifeMax >= 400;
 		protected override void MaxOut(Player player) {
-			while (player.ConsumedLifeCrystals < Player.LifeCrystalMax)
-				player.UseHealthMaxIncreasingItem(20);
+			int gained = Player.LifeCrystalMax - player.ConsumedLifeCrystals;
+			player.ConsumedLifeCrystals = Player.LifeCrystalMax; // 100 + 15 * 20 = 400 base life
+			player.UseHealthMaxIncreasingItem(gained * 20);
 		}
 		protected override int HealLife => 50; // Lesser Healing Potion
 		protected override int HealMana => 0;
@@ -229,10 +232,11 @@ namespace BagofChaos.Content.Items.Consumables
 
 	public class CompressedManaCrystal : CompressedStat
 	{
-		protected override bool IsMaxed(Player player) => player.ConsumedManaCrystals >= Player.ManaCrystalMax;
+		protected override bool IsMaxed(Player player) => player.ConsumedManaCrystals >= Player.ManaCrystalMax || player.statManaMax >= 200;
 		protected override void MaxOut(Player player) {
-			while (player.ConsumedManaCrystals < Player.ManaCrystalMax)
-				player.UseManaMaxIncreasingItem(20);
+			int gained = Player.ManaCrystalMax - player.ConsumedManaCrystals;
+			player.ConsumedManaCrystals = Player.ManaCrystalMax; // 20 + 9 * 20 = 200 base mana
+			player.UseManaMaxIncreasingItem(gained * 20);
 		}
 		protected override int HealLife => 0;
 		protected override int HealMana => 50; // Lesser Mana Potion
@@ -244,12 +248,12 @@ namespace BagofChaos.Content.Items.Consumables
 
 	public class CompressedLifeFruit : CompressedStat
 	{
-		protected override bool IsMaxed(Player player) => player.ConsumedLifeCrystals >= Player.LifeCrystalMax && player.ConsumedLifeFruit >= Player.LifeFruitMax;
+		protected override bool IsMaxed(Player player) => (player.ConsumedLifeCrystals >= Player.LifeCrystalMax && player.ConsumedLifeFruit >= Player.LifeFruitMax) || player.statLifeMax >= 500;
 		protected override void MaxOut(Player player) {
-			while (player.ConsumedLifeCrystals < Player.LifeCrystalMax)
-				player.UseHealthMaxIncreasingItem(20);
-			while (player.ConsumedLifeFruit < Player.LifeFruitMax)
-				player.UseHealthMaxIncreasingItem(5);
+			int gained = Math.Max(0, Player.LifeCrystalMax - player.ConsumedLifeCrystals) * 20 + Math.Max(0, Player.LifeFruitMax - player.ConsumedLifeFruit) * 5;
+			player.ConsumedLifeCrystals = Math.Max(player.ConsumedLifeCrystals, Player.LifeCrystalMax); // red hearts to 400
+			player.ConsumedLifeFruit = Math.Max(player.ConsumedLifeFruit, Player.LifeFruitMax); // golden hearts to 500
+			player.UseHealthMaxIncreasingItem(gained);
 		}
 		protected override int HealLife => 150; // Greater Healing Potion
 		protected override int HealMana => 0;

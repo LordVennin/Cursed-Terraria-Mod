@@ -31,6 +31,9 @@ namespace BagofChaos
 			ApplyBuffToNPC,   // client -> server: apply a buff to an NPC (glue, life link) so the server-side logic sees it
 			Succ,             // client -> server -> clients: every player on screen gets pulled to the user
 			TetherPull,       // client -> server -> client: Team Tether pulls (and heals) a specific player
+			PushNPC,          // client -> server: add velocity to an NPC (Succ.)
+			KillProjectile,   // client -> server: remove a projectile the client doesn't own (Warpaint capture)
+			SnailMark,        // client -> server: a snail flail hit this NPC (loot is decided on the server)
 		}
 
 		public override void HandlePacket(BinaryReader reader, int whoAmI) {
@@ -164,6 +167,30 @@ namespace BagofChaos
 					}
 					break;
 				}
+				case MessageType.PushNPC: {
+					int npcIndex = reader.ReadInt16();
+					Vector2 impulse = reader.ReadVector2();
+					if (Main.netMode == NetmodeID.Server && npcIndex >= 0 && npcIndex < Main.maxNPCs && Main.npc[npcIndex].active)
+						ChaosUtils.PushNPC(Main.npc[npcIndex], impulse);
+					break;
+				}
+				case MessageType.SnailMark: {
+					int npcIndex = reader.ReadInt16();
+					int mark = reader.ReadByte();
+					if (Main.netMode == NetmodeID.Server && npcIndex >= 0 && npcIndex < Main.maxNPCs && Main.npc[npcIndex].active)
+						Main.npc[npcIndex].GetGlobalNPC<ChaosGlobalNPC>().MarkForSnails(mark);
+					break;
+				}
+				case MessageType.KillProjectile: {
+					int identity = reader.ReadInt16();
+					int owner = reader.ReadByte();
+					if (Main.netMode == NetmodeID.Server) {
+						int index = Projectile.GetByUUID(owner, identity);
+						if (index >= 0 && index < Main.maxProjectiles && Main.projectile[index].active)
+							Main.projectile[index].Kill();
+					}
+					break;
+				}
 				default:
 					Logger.WarnFormat("BagofChaos: Unknown Message type: {0}", msgType);
 					break;
@@ -178,6 +205,44 @@ namespace BagofChaos
 			packet.Write((byte)MessageType.MoveNPC);
 			packet.Write((short)npc.whoAmI);
 			packet.WriteVector2(position);
+			packet.Send();
+		}
+
+		internal static void SendPushNPC(NPC npc, Vector2 impulse) {
+			if (Main.netMode == NetmodeID.MultiplayerClient) {
+				ModPacket packet = Instance.GetPacket();
+				packet.Write((byte)MessageType.PushNPC);
+				packet.Write((short)npc.whoAmI);
+				packet.WriteVector2(impulse);
+				packet.Send();
+			}
+			else {
+				ChaosUtils.PushNPC(npc, impulse);
+			}
+		}
+
+		/// <summary>Removes a projectile everywhere, even one owned by the server or another player.</summary>
+		internal static void SendKillProjectile(Projectile projectile) {
+			if (Main.netMode == NetmodeID.MultiplayerClient && projectile.owner != Main.myPlayer) {
+				ModPacket packet = Instance.GetPacket();
+				packet.Write((byte)MessageType.KillProjectile);
+				packet.Write((short)projectile.identity);
+				packet.Write((byte)projectile.owner);
+				packet.Send();
+				projectile.active = false; // hide it locally right away; the server's kill sync follows
+			}
+			else {
+				projectile.Kill();
+			}
+		}
+
+		internal static void SendSnailMark(NPC npc, int mark) {
+			if (Main.netMode != NetmodeID.MultiplayerClient)
+				return;
+			ModPacket packet = Instance.GetPacket();
+			packet.Write((byte)MessageType.SnailMark);
+			packet.Write((short)npc.whoAmI);
+			packet.Write((byte)mark);
 			packet.Send();
 		}
 

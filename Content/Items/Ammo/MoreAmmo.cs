@@ -72,7 +72,7 @@ namespace BagofChaos.Content.Items.Ammo
 		}
 
 		public override void SetDefaults() {
-			Item.damage = 25;
+			Item.damage = 10;
 			Item.DamageType = DamageClass.Ranged;
 			Item.width = 20;
 			Item.height = 20;
@@ -86,11 +86,7 @@ namespace BagofChaos.Content.Items.Ammo
 			Item.ammo = AmmoID.Bullet; // and arrows, via CanBeChosenAsAmmo
 		}
 
-		public override bool? CanBeChosenAsAmmo(Item weapon, Player player) {
-			if (!Main.playerInventory)
-				return false;
-			return weapon.useAmmo == AmmoID.Bullet || weapon.useAmmo == AmmoID.Arrow;
-		}
+		public override bool? CanBeChosenAsAmmo(Item weapon, Player player) => weapon.useAmmo == AmmoID.Bullet || weapon.useAmmo == AmmoID.Arrow;
 
 		public override bool CanBeConsumedAsAmmo(Item weapon, Player player) => false;
 	}

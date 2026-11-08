@@ -44,58 +44,131 @@ namespace BagofChaos.Content.Items.Weapons
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------
-	// Nail and Hammer: left click throws nails (apply Nails), right click slams a hammer that hurts nailed enemies extra.
+	// Nagel und Hammer (pre-hardmode, post-Skeletron): left click swings a big Iron Hammer, right click throws nails fast.
+	// Nails embed in enemies as a combo marker (up to 15). Each stack adds a flat amount to the hammer's damage against that
+	// enemy, and every hammer hit uses up one stack.
 	// ---------------------------------------------------------------------------------------------------------------
 	public class NailAndHammer : ModItem
 	{
+		public const int HammerDamage = 24;
+		public const int BonusPerStack = 4;
+		protected virtual int NailType => ModContent.ProjectileType<ThrownNail>();
+		protected virtual int NailUseTime => 8;
+		protected virtual float NailSpeed => 13f;
+		public override string Texture => "Terraria/Images/Item_" + ItemID.IronHammer;
+
 		public override void SetDefaults() {
-			Item.width = 30;
-			Item.height = 30;
-			Item.damage = 20;
+			Item.width = 32;
+			Item.height = 32;
+			Item.damage = HammerDamage;
 			Item.DamageType = DamageClass.Melee;
-			Item.useStyle = ItemUseStyleID.Swing;
-			Item.useTime = 16;
-			Item.useAnimation = 16;
-			Item.knockBack = 3f;
+			Item.knockBack = 6f;
+			Item.scale = 1.5f;
 			Item.autoReuse = true;
 			Item.rare = ItemRarityID.Orange;
 			Item.value = Item.buyPrice(gold: 2);
+			SetHammerMode();
+		}
+
+		protected virtual void SetHammerMode() {
+			Item.useStyle = ItemUseStyleID.Swing;
+			Item.useTime = 26;
+			Item.useAnimation = 26;
+			Item.noMelee = false;
+			Item.noUseGraphic = false;
+			Item.shoot = ProjectileID.None;
+			Item.shootSpeed = 0f;
 			Item.UseSound = SoundID.Item1;
-			Item.shoot = ModContent.ProjectileType<ThrownNail>();
-			Item.shootSpeed = 12f;
+		}
+
+		private void SetNailMode() {
+			Item.useStyle = ItemUseStyleID.Swing; // with no use graphic this is the throwing animation
+			Item.useTime = NailUseTime;
+			Item.useAnimation = NailUseTime;
 			Item.noMelee = true;
+			Item.noUseGraphic = true;
+			Item.shoot = NailType;
+			Item.shootSpeed = NailSpeed;
+			Item.UseSound = SoundID.Item1;
 		}
 
 		public override bool AltFunctionUse(Player player) => true;
 
 		public override bool CanUseItem(Player player) {
-			if (player.altFunctionUse == 2) {
-				// Hammer slam: a slow, heavy melee swing with no projectile.
-				Item.noMelee = false;
-				Item.useTime = 30;
-				Item.useAnimation = 30;
-				Item.shoot = ProjectileID.None;
-				Item.UseSound = SoundID.Item37;
-				Item.knockBack = 8f;
-			}
-			else {
-				Item.noMelee = true;
-				Item.useTime = 16;
-				Item.useAnimation = 16;
-				Item.shoot = ModContent.ProjectileType<ThrownNail>();
-				Item.UseSound = SoundID.Item1;
-				Item.knockBack = 3f;
-			}
+			if (player.altFunctionUse == 2)
+				SetNailMode();
+			else
+				SetHammerMode();
 			return true;
 		}
 
+		public override void ModifyShootStats(Player player, ref Vector2 position, ref Vector2 velocity, ref int type, ref int damage, ref float knockback) {
+			damage = (int)(damage * NailDamageFraction);
+			knockback = 1f;
+		}
+
+		protected virtual float NailDamageFraction => 0.4f;
+
+		// Hammer hits: bonus first, then one nail comes out. Melee swings hit each enemy once, so one stack per hit.
 		public override void ModifyHitNPC(Player player, NPC target, ref NPC.HitModifiers modifiers) {
-			if (target.HasBuff<Nails>())
-				modifiers.SourceDamage *= 3f; // the hammer finds the nails
+			int stacks = target.GetGlobalNPC<ChaosGlobalNPC>().NailStacks;
+			if (stacks > 0)
+				modifiers.FlatBonusDamage += stacks * BonusPerStack;
+		}
+
+		public override void OnHitNPC(Player player, NPC target, NPC.HitInfo hit, int damageDone) {
+			target.GetGlobalNPC<ChaosGlobalNPC>().ConsumeNails(1);
 		}
 
 		public override void AddRecipes() {
 			CreateRecipe().AddIngredient(ItemID.Spike, 10).AddIngredient(ItemID.Bone, 20).AddRecipeGroup(RecipeGroupID.IronBar, 8).AddTile(TileID.Anvils).Register();
+		}
+	}
+
+	// Geschmolzener Nagel und Hammer (early hardmode): left click throws a huge spinning Molten Hamaxe that comes back.
+	// Hitting a nailed enemy pulls every nail out at once in a single fixed-damage explosion. Right click throws slower,
+	// bigger, red-hot nails that burn.
+	public class MoltenNailAndHammer : NailAndHammer
+	{
+		public const int ExplosionDamage = 90;
+		protected override int NailType => ModContent.ProjectileType<MoltenNail>();
+		protected override int NailUseTime => 14;
+		protected override float NailSpeed => 12f;
+		protected override float NailDamageFraction => 0.5f;
+		public override string Texture => "Terraria/Images/Item_" + ItemID.MoltenHamaxe;
+
+		public override void SetDefaults() {
+			base.SetDefaults();
+			Item.damage = 46;
+			Item.scale = 1f;
+			Item.rare = ItemRarityID.LightRed;
+			Item.value = Item.buyPrice(gold: 6);
+		}
+
+		protected override void SetHammerMode() {
+			Item.useStyle = ItemUseStyleID.Swing;
+			Item.useTime = 30;
+			Item.useAnimation = 30;
+			Item.noMelee = true;
+			Item.noUseGraphic = true;
+			Item.shoot = ModContent.ProjectileType<MoltenHammerProjectile>();
+			Item.shootSpeed = 13f;
+			Item.UseSound = SoundID.Item1;
+		}
+
+		public override bool CanUseItem(Player player) {
+			bool ok = base.CanUseItem(player);
+			// Only one giant hammer in the air at a time.
+			return ok && (player.altFunctionUse == 2 || player.ownedProjectileCounts[ModContent.ProjectileType<MoltenHammerProjectile>()] == 0);
+		}
+
+		public override void ModifyShootStats(Player player, ref Vector2 position, ref Vector2 velocity, ref int type, ref int damage, ref float knockback) {
+			if (player.altFunctionUse == 2)
+				base.ModifyShootStats(player, ref position, ref velocity, ref type, ref damage, ref knockback);
+		}
+
+		public override void AddRecipes() {
+			CreateRecipe().AddIngredient<NailAndHammer>().AddIngredient(ItemID.HellstoneBar, 15).AddIngredient(ItemID.SoulofNight, 5).AddTile(TileID.MythrilAnvil).Register();
 		}
 	}
 
@@ -207,11 +280,26 @@ namespace BagofChaos.Content.Items.Weapons
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------
-	// Rat Tacks: throw 2-3 rats that lie on the ground and bite anything that steps on them. Right click toggles melee/summon.
+	// Rat Tacks: throw 2-3 rats that sit on the ground as traps and bite anything that steps on them.
+	// Each rat lasts 3 successful bites or 30 seconds. 20 rats max; new throws evict the oldest rats first.
+	// Right click toggles melee/summon, which instantly applies to every rat already on the ground too.
 	// ---------------------------------------------------------------------------------------------------------------
-	public class RatTacks : ModItem
+	public class RatTacks : ModItem, Common.GlobalItems.IManagesOwnDamageClass
 	{
-		public override string Texture => "BagofChaos/Content/Projectiles/RatBullet";
+		public const int MaxRats = 20;
+		public const int MeleeDamage = 14;
+		public const int SummonDamage = 17;
+
+		public override string Texture => "Terraria/Images/Item_" + ItemID.Mouse;
+
+		public static DamageClass ModeClass(Player player) => player.GetModPlayer<ChaosPlayer>().RatTacksSummon ? DamageClass.Summon : DamageClass.Melee;
+		public static int ModeDamage(Player player) => player.GetModPlayer<ChaosPlayer>().RatTacksSummon ? SummonDamage : MeleeDamage;
+
+		// Keep the tooltip (damage number and class) in step with the selected mode.
+		public override void UpdateInventory(Player player) {
+			Item.DamageType = ModeClass(player);
+			Item.damage = ModeDamage(player);
+		}
 
 		public override void SetDefaults() {
 			Item.width = 22;
@@ -239,16 +327,26 @@ namespace BagofChaos.Content.Items.Weapons
 					ChaosPlayer chaos = player.GetModPlayer<ChaosPlayer>();
 					chaos.RatTacksSummon = !chaos.RatTacksSummon;
 					Main.NewText(Terraria.Localization.Language.GetTextValue("Mods.BagofChaos.Items.RatTacks." + (chaos.RatTacksSummon ? "ModeSummon" : "ModeMelee")), Color.Gray);
+					UpdateInventory(player);
 				}
 				return false;
 			}
-			Item.DamageType = player.GetModPlayer<ChaosPlayer>().RatTacksSummon ? DamageClass.Summon : DamageClass.Melee;
-			return player.ownedProjectileCounts[Item.shoot] < 20;
+			UpdateInventory(player);
+			return true;
 		}
 
 		public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback) {
 			int count = Main.rand.Next(2, 4);
-			for (int i = 0; i < count && player.ownedProjectileCounts[type] + i < 20; i++)
+			// Over the cap: the oldest rats (least time left) leave first, just enough to fit this throw.
+			var rats = new List<Projectile>();
+			foreach (Projectile p in Main.ActiveProjectiles) {
+				if (p.type == type && p.owner == player.whoAmI)
+					rats.Add(p);
+			}
+			rats.Sort((a, b) => a.timeLeft.CompareTo(b.timeLeft));
+			for (int i = 0; i < rats.Count + count - MaxRats && i < rats.Count; i++)
+				rats[i].Kill();
+			for (int i = 0; i < count; i++)
 				Projectile.NewProjectile(source, position, velocity.RotatedByRandom(0.3f) * Main.rand.NextFloat(0.8f, 1.2f), type, damage, knockback, player.whoAmI);
 			return false;
 		}
@@ -405,10 +503,12 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.shoot = ModContent.ProjectileType<FishStackMinion>();
 		}
 
+		// One fish per use, stacked on the tower. Vanilla minion slot rules decide how tall it can get.
 		public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback) {
 			player.AddBuff(Item.buffType, 2);
-			for (int i = 0; i < 3; i++)
-				Projectile.NewProjectile(source, player.Top, Vector2.Zero, type, damage, knockback, player.whoAmI);
+			int index = Projectile.NewProjectile(source, player.Top, Vector2.Zero, type, damage, knockback, player.whoAmI);
+			if (index >= 0 && index < Main.maxProjectiles)
+				Main.projectile[index].originalDamage = Item.damage;
 			return false;
 		}
 
@@ -426,26 +526,24 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.width = 28;
 			Item.height = 28;
 			Item.useStyle = ItemUseStyleID.HoldUp;
-			Item.useTime = 45;
-			Item.useAnimation = 45;
+			Item.useTime = 18;
+			Item.useAnimation = 18;
+			Item.autoReuse = false; // one click, one pull
 			Item.noMelee = true;
 			Item.rare = ItemRarityID.LightRed;
 			Item.value = Item.buyPrice(gold: 3);
 			Item.UseSound = SoundID.Item24;
 		}
 
+		// Each click is one full-strength shove toward where you are right now. No teleports, no homing, no speed cap:
+		// the shove adds to whatever velocity the target already has, so spam-clicking gets silly fast.
 		public override bool? UseItem(Player player) {
 			if (player.whoAmI != Main.myPlayer)
 				return true;
 			Rectangle screen = Common.ChaosUtils.ScreenWorldRect;
 			foreach (NPC npc in Main.ActiveNPCs) {
-				if ((npc.townNPC || npc.friendly) && screen.Intersects(npc.Hitbox)) {
-					Vector2 target = player.Center - npc.Size * 0.5f + new Vector2(Main.rand.NextFloat(-24f, 24f), 0f);
-					npc.position = target;
-					npc.velocity = Vector2.Zero;
-					npc.netUpdate = true;
-					BagofChaos.SendMoveNPC(npc, target);
-				}
+				if ((npc.townNPC || npc.friendly) && screen.Intersects(npc.Hitbox))
+					BagofChaos.SendPushNPC(npc, Common.ChaosUtils.SuccImpulse(npc.Center, player.Center));
 			}
 			BagofChaos.SendSucc(player.whoAmI, player.Center);
 			return true;
@@ -461,7 +559,11 @@ namespace BagofChaos.Content.Items.Weapons
 	// ---------------------------------------------------------------------------------------------------------------
 	public class FartReverbMp4 : ModItem
 	{
-		public const int MaxCharge = 60 * 20;
+		// Charge curve: 0% -> 50% over the first 14 seconds, holds at 50%, then jumps to 100% at exactly 15 seconds.
+		public const int HalfChargeTime = 60 * 14;
+		public const int MaxCharge = 60 * 15;
+
+		public static float ChargePercent(int frames) => frames >= MaxCharge ? 1f : 0.5f * Math.Min(1f, frames / (float)HalfChargeTime);
 
 		public override void SetDefaults() {
 			Item.width = 32;
@@ -482,12 +584,20 @@ namespace BagofChaos.Content.Items.Weapons
 			if (player.channel && player.itemAnimation > 0 || player.channel && chaos.FartCharge > 0) {
 				player.itemAnimation = Math.Max(player.itemAnimation, 2);
 				chaos.FartCharge = Math.Min(MaxCharge, chaos.FartCharge + 1);
-				if (chaos.FartCharge % 60 == 0 && Main.netMode != NetmodeID.Server)
-					SoundEngine.PlaySound(SoundID.Item16 with { Pitch = -0.5f + chaos.FartCharge / (float)MaxCharge, Volume = 0.6f }, player.Center);
-				if (chaos.FartCharge == MaxCharge && Main.netMode != NetmodeID.Server)
-					SoundEngine.PlaySound(SoundID.Item16 with { Volume = 1.5f, Pitch = -0.8f }, player.Center);
+				float percent = ChargePercent(chaos.FartCharge);
+				if (chaos.FartCharge % 60 == 0 && chaos.FartCharge < MaxCharge && Main.netMode != NetmodeID.Server) {
+					SoundEngine.PlaySound(SoundID.Item16 with { Pitch = -0.5f + percent, Volume = 0.4f }, player.Center);
+					if (player.whoAmI == Main.myPlayer)
+						CombatText.NewText(player.Hitbox, new Color(160, 200, 80), (int)(percent * 100f) + "%", false, true);
+				}
+				// Maximum charge: the real (vanilla) fart sound.
+				if (chaos.FartCharge == MaxCharge && Main.netMode != NetmodeID.Server) {
+					SoundEngine.PlaySound(SoundID.Item16 with { Volume = 1.5f }, player.Center);
+					if (player.whoAmI == Main.myPlayer)
+						CombatText.NewText(player.Hitbox, Color.OrangeRed, "100%", true);
+				}
 				if (Main.rand.NextBool(3)) {
-					Dust dust = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Smoke, 0f, -1f, 100, new Color(120, 180, 60), 1f + chaos.FartCharge / (float)MaxCharge * 2f);
+					Dust dust = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Smoke, 0f, -1f, 100, new Color(120, 180, 60), 1f + percent * 2f);
 					dust.noGravity = true;
 				}
 			}
@@ -498,9 +608,10 @@ namespace BagofChaos.Content.Items.Weapons
 		}
 
 		private static void Detonate(Player player, int charge) {
-			float power = charge / (float)MaxCharge;
+			float power = ChargePercent(charge);
 			int damage = (int)(800 * power);
-			int radiusTiles = (int)(50 * power);
+			// Blocks scale harder than damage: half charge is a 12 tile crater, full charge is 50.
+			int radiusTiles = (int)(50 * power * power);
 			if (Main.netMode != NetmodeID.Server) {
 				SoundEngine.PlaySound(SoundID.Item16 with { Volume = 1.5f, Pitch = -1f }, player.Center);
 				SoundEngine.PlaySound(SoundID.Item62, player.Center);

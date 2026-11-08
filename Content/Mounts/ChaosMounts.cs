@@ -7,76 +7,24 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Mounts
 {
-	// "Harpy" Wings: a harpy sits behind your head and lets you glide. Uses the vanilla harpy sheet.
-	public class HarpyWingsMount : ModMount
-	{
-		public override string Texture => "Terraria/Images/NPC_" + NPCID.Harpy;
-
-		public override void SetStaticDefaults() {
-			MountData.jumpHeight = 8;
-			MountData.acceleration = 0.12f;
-			MountData.jumpSpeed = 5f;
-			MountData.blockExtraJumps = false;
-			MountData.constantJump = true;
-			MountData.heightBoost = 0;
-			MountData.fallDamage = 0f;
-			MountData.runSpeed = 5f;
-			MountData.dashSpeed = 5f;
-			MountData.flightTimeMax = 0;
-			MountData.fatigueMax = 0;
-			MountData.buff = ModContent.BuffType<Buffs.HarpyMountBuff>();
-			MountData.spawnDust = DustID.Cloud;
-
-			int frames = Main.npcFrameCount[NPCID.Harpy];
-			MountData.totalFrames = frames;
-			MountData.playerYOffsets = Enumerable.Repeat(0, frames).ToArray();
-			MountData.xOffset = 0;
-			MountData.yOffset = -26; // behind the head
-			MountData.playerHeadOffset = 0;
-			MountData.bodyFrame = 3;
-			MountData.standingFrameCount = frames;
-			MountData.standingFrameDelay = 8;
-			MountData.standingFrameStart = 0;
-			MountData.runningFrameCount = frames;
-			MountData.runningFrameDelay = 6;
-			MountData.runningFrameStart = 0;
-			MountData.flyingFrameCount = frames;
-			MountData.flyingFrameDelay = 4;
-			MountData.flyingFrameStart = 0;
-			MountData.inAirFrameCount = frames;
-			MountData.inAirFrameDelay = 4;
-			MountData.inAirFrameStart = 0;
-			MountData.idleFrameCount = frames;
-			MountData.idleFrameDelay = 10;
-			MountData.idleFrameStart = 0;
-			MountData.idleFrameLoop = true;
-			MountData.swimFrameCount = frames;
-			MountData.swimFrameDelay = 8;
-			MountData.swimFrameStart = 0;
-			if (!Main.dedServ) {
-				MountData.textureWidth = MountData.backTexture.Width();
-				MountData.textureHeight = MountData.backTexture.Height();
-			}
-		}
-
-		public override void UpdateEffects(Player player) {
-			// Glide: holding jump in the air slows your fall like a pair of wings would.
-			if (player.controlJump && player.velocity.Y > 0f && player.jump == 0)
-				player.velocity.Y = System.Math.Min(player.velocity.Y, 1.2f);
-			if (Main.rand.NextBool(10))
-				Dust.NewDust(player.position, player.width, player.height, DustID.Cloud, 0f, 1f);
-		}
-	}
-
-	// Rat Cart: a minecart that squeaks and is faster underground.
+	// Rat Cart: a minecart (it goes in the minecart equipment slot) that squeaks and is faster underground.
 	public class RatCartMount : ModMount
 	{
+		public const float SurfaceSpeed = 13f, UndergroundSpeed = 20f;
+
 		public override void SetStaticDefaults() {
 			MountData.Minecart = true;
+			MountID.Sets.Cart[Type] = true;
+			MountData.runSpeed = SurfaceSpeed;
+			MountData.dashSpeed = SurfaceSpeed;
+			MountData.acceleration = 0.04f;
+			MountData.jumpHeight = 15;
+			MountData.jumpSpeed = 5.15f;
+			MountData.fallDamage = 1f;
 			MountData.spawnDust = DustID.Smoke;
 			MountData.buff = ModContent.BuffType<Buffs.RatCartBuff>();
-			MountData.MinecartUpgradeRunSpeed = 14f;
-			MountData.MinecartUpgradeDashSpeed = 14f;
+			MountData.MinecartUpgradeRunSpeed = 20f;
+			MountData.MinecartUpgradeDashSpeed = 20f;
 			MountData.MinecartUpgradeAcceleration = 0.1f;
 			MountData.delegations.MinecartDust = DelegateMethods.Minecart.Sparks;
 			MountData.delegations.MinecartLandingSound = DelegateMethods.Minecart.LandingSound;
@@ -104,29 +52,37 @@ namespace BagofChaos.Content.Mounts
 		}
 
 		public override void UpdateEffects(Player player) {
+			// A squeak every few seconds, on average.
 			if (Main.rand.NextBool(240))
 				SoundEngine.PlaySound(new SoundStyle($"{BagofChaos.AssetPath}Sounds/Squeak") { Volume = 0.7f, PitchVariance = 0.3f }, player.Center);
-			// Slower on the surface; "faster underground" is the same thing from the other side.
-			if (!player.ZoneDirtLayerHeight && !player.ZoneRockLayerHeight && !player.ZoneUnderworldHeight && System.Math.Abs(player.velocity.X) > 8f)
-				player.velocity.X *= 0.97f;
+			// Native minecart movement, just a higher top speed below the surface.
+			bool underground = player.ZoneDirtLayerHeight || player.ZoneRockLayerHeight || player.ZoneUnderworldHeight;
+			float speed = underground ? UndergroundSpeed : SurfaceSpeed;
+			MountData.runSpeed = speed;
+			MountData.dashSpeed = speed;
+			MountData.MinecartUpgradeRunSpeed = speed + 6f;
+			MountData.MinecartUpgradeDashSpeed = speed + 6f;
 		}
 	}
 
-	// Sharkboard: ride a shark. Breathe underwater. Go fast in water.
+	// Sharkboard: ride on top of a vanilla shark. Breathe underwater. Fast in water, miserable on land.
 	public class SharkboardMount : ModMount
 	{
 		public override string Texture => "Terraria/Images/NPC_" + NPCID.Shark;
 
+		// Mount art is normally Texture + "_Back"; the shark sheet itself is the back layer.
+		protected override string GetExtraTexture(MountTextureType textureType) => textureType == MountTextureType.Back ? Texture : null;
+
 		public override void SetStaticDefaults() {
-			MountData.jumpHeight = 6;
-			MountData.acceleration = 0.2f;
-			MountData.jumpSpeed = 4f;
+			MountData.jumpHeight = 4;
+			MountData.acceleration = 0.04f; // sluggish
+			MountData.jumpSpeed = 3f;
 			MountData.blockExtraJumps = false;
 			MountData.constantJump = false;
 			MountData.heightBoost = 14;
 			MountData.fallDamage = 1f;
-			MountData.runSpeed = 4f;
-			MountData.dashSpeed = 4f;
+			MountData.runSpeed = 2.2f;
+			MountData.dashSpeed = 2.2f;
 			MountData.flightTimeMax = 0;
 			MountData.fatigueMax = 0;
 			MountData.buff = ModContent.BuffType<Buffs.SharkboardBuff>();
@@ -152,11 +108,19 @@ namespace BagofChaos.Content.Mounts
 
 		public override void UpdateEffects(Player player) {
 			player.gills = true;
-			if (player.wet) {
+			if (player.wet && !player.lavaWet) {
+				// In water it's a shark: fast, and it swims up and down.
 				player.ignoreWater = true;
-				player.accFlipper = true;
-				player.maxRunSpeed *= 2.5f;
-				player.accRunSpeed *= 2.5f;
+				player.maxRunSpeed = 9f;
+				player.accRunSpeed = 9f;
+				player.runAcceleration = 0.4f;
+				if (player.controlUp || player.controlJump)
+					player.velocity.Y = System.Math.Max(player.velocity.Y - 0.5f, -6f);
+				else if (player.controlDown)
+					player.velocity.Y = System.Math.Min(player.velocity.Y + 0.5f, 6f);
+				else
+					player.velocity.Y *= 0.9f;
+				player.fallStart = (int)(player.position.Y / 16f);
 			}
 		}
 	}

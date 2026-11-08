@@ -8,7 +8,8 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Items.Weapons
 {
-	// Slotter Pillar: your inventory slots become minions while the inventory is open.
+	// Slotter Pillar: your inventory slots become minions. They hover where their slot is on your screen (inventory open
+	// or not), dash at enemies showing the item they hold, and come back to their slot. Nothing is moved or copied.
 	public class SlotterPillar : ModItem
 	{
 		public override void SetStaticDefaults() {
@@ -34,8 +35,6 @@ namespace BagofChaos.Content.Items.Weapons
 			Item.buffType = ModContent.BuffType<SlotterBuff>();
 			Item.shoot = ModContent.ProjectileType<SlotMinion>();
 		}
-
-		public override bool CanUseItem(Player player) => Main.playerInventory;
 
 		public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback) {
 			player.AddBuff(Item.buffType, 2);

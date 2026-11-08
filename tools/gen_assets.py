@@ -579,6 +579,48 @@ def gen_npcs():
     s.rect(0, 2, 23, 6, DARKGREY); s.rect(5, 0, 18, 4, DARKGREY)
     s.px(8, 12, BLACK); s.px(15, 12, BLACK)
     s.save(N + "ZombieCEO_Head_Boss.png")
+    s = Sprite(10, 30)  # spider dust: 3 frames of 10x10 with a gap row
+    for f in range(3):
+        y = f * 10
+        s.ellipse(3, y + 3, 6, y + 6, BLACK, outline=None)
+        for i, (dx, dy) in enumerate([(-2, -1), (-2, 1), (2, -1), (2, 1)]):
+            s.line(4 + dx // 2, y + 4 + dy, 4 + dx * 2 + (f - 1) * (i % 2), y + 4 + dy * 2, DARKGREY)
+        s.px(4, y + 3, RED)
+    s.save("Content/Dusts/SpiderDust.png")
+
+    # Complete Triforce: only the active segment is lit. Top = melee (red), lower left = magic (blue), lower right = ranged (green).
+    unlit = (110, 95, 60, 255)
+    for mode, lit in [("Melee", {"top": RED}), ("Magic", {"left": BLUE}), ("Ranged", {"right": GREEN}), ("Summon", {"top": GOLD, "left": GOLD, "right": GOLD})]:
+        s = Sprite(26, 24)
+        s.poly([(13, 1), (19, 11), (7, 11)], lit.get("top", unlit))
+        s.poly([(7, 12), (13, 22), (1, 22)], lit.get("left", unlit))
+        s.poly([(19, 12), (25, 22), (13, 22)], lit.get("right", unlit))
+        s.save("Content/Items/Accessories/CompleteTriforce_" + mode + ".png")
+    # "Harpy" Wings: the wing slot itself is invisible (the harpy is drawn by HarpyDrawLayer). 4 empty frames.
+    Sprite(4, 16).save("Content/Items/Mounts/HarpyWings_Wings.png")
+    # Slam Dunker: basketball, hoop sentry, and the item (a ball going through a hoop)
+    ORANGEBALL = (230, 120, 40, 255)
+    s = Sprite(16, 16); s.ellipse(0, 0, 15, 15, ORANGEBALL); s.line(7, 1, 7, 14, BLACK); s.line(1, 7, 14, 7, BLACK)
+    s.d.arc([-4, 2, 6, 13], 300, 60, fill=BLACK); s.d.arc([9, 2, 19, 13], 120, 240, fill=BLACK); s.save("Content/Projectiles/Basketball.png")
+    s = Sprite(40, 40)
+    s.rect(4, 0, 35, 19, WHITE, outline=DARKGREY); s.rect(13, 6, 26, 15, WHITE, outline=RED)      # backboard
+    s.rect(9, 18, 30, 20, ORANGE, outline=DARKRED)                                                  # rim
+    for i in range(5):
+        s.line(10 + i * 5, 21, 13 + i * 3, 33, LIGHTGREY)                                           # net
+    s.line(10, 27, 29, 27, LIGHTGREY); s.line(13, 33, 26, 33, LIGHTGREY)
+    s.save("Content/Projectiles/DunkHoop.png")
+    s = Sprite(30, 30)
+    s.rect(2, 2, 27, 12, WHITE, outline=DARKGREY); s.rect(9, 5, 20, 10, WHITE, outline=RED); s.rect(6, 11, 23, 13, ORANGE, outline=DARKRED)
+    for i in range(4):
+        s.line(7 + i * 5, 14, 10 + i * 3, 22, LIGHTGREY)
+    s.ellipse(17, 17, 28, 28, ORANGEBALL); s.line(22, 18, 22, 27, BLACK); s.line(18, 22, 27, 22, BLACK)
+    s.save("Content/Items/Weapons/SlamDunker.png")
+    # Warpaint buffs
+    s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY); s.ellipse(6, 6, 25, 25, PINK); s.ellipse(11, 11, 20, 20, DARKGREY, outline=None)
+    s.line(4, 16, 9, 16, WHITE); s.line(22, 16, 27, 16, WHITE); s.line(16, 4, 16, 9, WHITE); s.line(16, 22, 16, 27, WHITE)
+    s.save("Content/Buffs/WarpaintMagnetBuff.png")
+    s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY); s.ellipse(6, 6, 25, 25, GREY); s.line(16, 16, 16, 8, BLACK); s.line(16, 16, 22, 16, BLACK)
+    s.save("Content/Buffs/WarpaintCooldown.png")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -896,7 +938,7 @@ def gen_update_assets():
         s.ellipse(5, y + 18, 15, y + 28, BLACK); s.ellipse(24, y + 18, 34, y + 28, BLACK)
         s.ellipse(12, y + 0, 26, y + 8, GREY); s.px(23, y + 3, BLACK)
         s.line(2, y + 4 + f, 12, y + 2, PINK)
-    s.save("Content/Mounts/RatCartMount.png")
+    s.save("Content/Mounts/RatCartMount_Back.png")
 
     # --- blocks ---
     for name, col, trim in [("HollowBlock", (30, 30, 40, 170), GOLD), ("BlueCoreBlock", (60, 120, 255, 170), (120, 170, 255, 255))]:
@@ -949,7 +991,6 @@ def gen_update_assets():
     buff("UnstablePower", lambda s: (s.ellipse(6, 6, 25, 25, PURPLE), s.poly([(16, 8), (12, 18), (17, 17), (14, 25), (21, 14), (16, 15)], YELLOW, outline=None)))
     buff("FishStackBuff", lambda s: (s.ellipse(6, 8, 25, 16, GOLD), s.ellipse(6, 16, 25, 24, GOLD)))
     buff("SlotterBuff", lambda s: (s.rect(6, 6, 25, 25, DARKBLUE), s.rect(10, 10, 21, 21, (90, 100, 200, 255))))
-    buff("HarpyMountBuff", lambda s: (s.ellipse(4, 10, 15, 22, TAN), s.ellipse(16, 10, 27, 22, TAN)))
     buff("RatCartBuff", lambda s: (s.rect(6, 10, 25, 22, BROWN), s.ellipse(7, 20, 13, 26, BLACK), s.ellipse(18, 20, 24, 26, BLACK)))
     buff("SharkboardBuff", lambda s: (s.poly([(4, 16), (20, 9), (27, 16), (20, 23)], GREY),))
     s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY, outline=BLACK); s.ellipse(6, 14, 25, 28, ORANGE); s.ellipse(10, 4, 21, 15, BLACK); s.save("Content/Pets/SpiderOnABallBuff.png")
@@ -969,6 +1010,76 @@ def gen_update_assets():
     write_wav("Assets/Sounds/Scream.wav", out)
 
 
+def outline_of(src_rel, dst_rel):
+    """Smart-interact highlight: white pixels on the inner border of every opaque area."""
+    src = Image.open(os.path.join(ROOT, src_rel)).convert("RGBA")
+    w, h = src.size
+    out = Image.new("RGBA", (w, h), TRANSPARENT)
+    for y in range(h):
+        for x in range(w):
+            if src.getpixel((x, y))[3] == 0:
+                continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if not (0 <= nx < w and 0 <= ny < h) or src.getpixel((nx, ny))[3] == 0:
+                    out.putpixel((x, y), WHITE)
+                    break
+    out.save(os.path.join(ROOT, dst_rel))
+    print("wrote", dst_rel)
+
+
+def gen_round4_assets():
+    N = "Content/NPCs/"
+    outline_of("Content/Tiles/AlchemicalDehydratorTile.png", "Content/Tiles/AlchemicalDehydratorTile_Highlight.png")
+    outline_of("Content/Tiles/ChaoticDehydratorTile.png", "Content/Tiles/ChaoticDehydratorTile_Highlight.png")
+    s = Sprite(26, 26)  # CEO map icon: zombie head with a tie
+    s.ellipse(3, 1, 22, 20, ZOMBIE); s.rect(7, 8, 10, 11, BLACK, outline=None); s.rect(15, 8, 18, 11, BLACK, outline=None)
+    s.line(8, 15, 17, 15, ZOMBIEDARK); s.poly([(11, 20), (14, 20), (13, 25), (12, 25)], RED)
+    s.save(N + "ZombieCEO_Head_Boss.png")
+    s = Sprite(10, 30)  # spider dust: 3 frames of 10x10 with a gap row
+    for f in range(3):
+        y = f * 10
+        s.ellipse(3, y + 3, 6, y + 6, BLACK, outline=None)
+        for i, (dx, dy) in enumerate([(-2, -1), (-2, 1), (2, -1), (2, 1)]):
+            s.line(4 + dx // 2, y + 4 + dy, 4 + dx * 2 + (f - 1) * (i % 2), y + 4 + dy * 2, DARKGREY)
+        s.px(4, y + 3, RED)
+    s.save("Content/Dusts/SpiderDust.png")
+
+    # Complete Triforce: only the active segment is lit. Top = melee (red), lower left = magic (blue), lower right = ranged (green).
+    unlit = (110, 95, 60, 255)
+    for mode, lit in [("Melee", {"top": RED}), ("Magic", {"left": BLUE}), ("Ranged", {"right": GREEN}), ("Summon", {"top": GOLD, "left": GOLD, "right": GOLD})]:
+        s = Sprite(26, 24)
+        s.poly([(13, 1), (19, 11), (7, 11)], lit.get("top", unlit))
+        s.poly([(7, 12), (13, 22), (1, 22)], lit.get("left", unlit))
+        s.poly([(19, 12), (25, 22), (13, 22)], lit.get("right", unlit))
+        s.save("Content/Items/Accessories/CompleteTriforce_" + mode + ".png")
+    # "Harpy" Wings: the wing slot itself is invisible (the harpy is drawn by HarpyDrawLayer). 4 empty frames.
+    Sprite(4, 16).save("Content/Items/Mounts/HarpyWings_Wings.png")
+    # Slam Dunker: basketball, hoop sentry, and the item (a ball going through a hoop)
+    ORANGEBALL = (230, 120, 40, 255)
+    s = Sprite(16, 16); s.ellipse(0, 0, 15, 15, ORANGEBALL); s.line(7, 1, 7, 14, BLACK); s.line(1, 7, 14, 7, BLACK)
+    s.d.arc([-4, 2, 6, 13], 300, 60, fill=BLACK); s.d.arc([9, 2, 19, 13], 120, 240, fill=BLACK); s.save("Content/Projectiles/Basketball.png")
+    s = Sprite(40, 40)
+    s.rect(4, 0, 35, 19, WHITE, outline=DARKGREY); s.rect(13, 6, 26, 15, WHITE, outline=RED)      # backboard
+    s.rect(9, 18, 30, 20, ORANGE, outline=DARKRED)                                                  # rim
+    for i in range(5):
+        s.line(10 + i * 5, 21, 13 + i * 3, 33, LIGHTGREY)                                           # net
+    s.line(10, 27, 29, 27, LIGHTGREY); s.line(13, 33, 26, 33, LIGHTGREY)
+    s.save("Content/Projectiles/DunkHoop.png")
+    s = Sprite(30, 30)
+    s.rect(2, 2, 27, 12, WHITE, outline=DARKGREY); s.rect(9, 5, 20, 10, WHITE, outline=RED); s.rect(6, 11, 23, 13, ORANGE, outline=DARKRED)
+    for i in range(4):
+        s.line(7 + i * 5, 14, 10 + i * 3, 22, LIGHTGREY)
+    s.ellipse(17, 17, 28, 28, ORANGEBALL); s.line(22, 18, 22, 27, BLACK); s.line(18, 22, 27, 22, BLACK)
+    s.save("Content/Items/Weapons/SlamDunker.png")
+    # Warpaint buffs
+    s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY); s.ellipse(6, 6, 25, 25, PINK); s.ellipse(11, 11, 20, 20, DARKGREY, outline=None)
+    s.line(4, 16, 9, 16, WHITE); s.line(22, 16, 27, 16, WHITE); s.line(16, 4, 16, 9, WHITE); s.line(16, 22, 16, 27, WHITE)
+    s.save("Content/Buffs/WarpaintMagnetBuff.png")
+    s = Sprite(32, 32); s.rect(0, 0, 31, 31, DARKGREY); s.ellipse(6, 6, 25, 25, GREY); s.line(16, 16, 16, 8, BLACK); s.line(16, 16, 22, 16, BLACK)
+    s.save("Content/Buffs/WarpaintCooldown.png")
+
+
 if __name__ == "__main__":
     gen_items()
     gen_projectiles()
@@ -980,4 +1091,5 @@ if __name__ == "__main__":
     gen_sounds()
     gen_icons()
     gen_update_assets()
+    gen_round4_assets()
     print("done")

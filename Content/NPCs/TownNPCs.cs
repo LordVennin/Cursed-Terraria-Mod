@@ -4,8 +4,10 @@ using System.Linq;
 using BagofChaos.Common.Players;
 using BagofChaos.Common.Systems;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Audio;
+using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.Localization;
@@ -204,7 +206,8 @@ namespace BagofChaos.Content.NPCs
 		}
 	}
 
-	// Shlue: a town pet made of two glue slimes with googly eyes. Shows up after 50 glue enemies have died.
+	// Shlue: a town pet made of two glue slimes stacked on top of each other (slightly off-centre). Only the top one got
+	// googly eyes. Shows up after 50 glue enemies have died. Drawn from the vanilla slime sprite, glue-white.
 	[AutoloadHead]
 	public class Shlue : ModNPC
 	{
@@ -240,7 +243,44 @@ namespace BagofChaos.Content.NPCs
 
 		public override bool CanTownNPCSpawn(int numTownNPCs) => ChaosEvents.GlueKills >= 50;
 
-		public override string GetChat() => Language.GetTextValue("Mods.BagofChaos.NPCs.Shlue.Chat" + Main.rand.Next(3));
+		public const int ChatLines = 14;
+		private static int lastChat = -1;
+
+		// Glue jokes, slime puns and nonsense, never the same line twice in a row.
+		public override string GetChat() {
+			int line = Main.rand.Next(ChatLines);
+			if (line == lastChat)
+				line = (line + 1 + Main.rand.Next(ChatLines - 1)) % ChatLines;
+			lastChat = line;
+			return Language.GetTextValue("Mods.BagofChaos.NPCs.Shlue.Chat" + line);
+		}
+
+		public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			Main.instance.LoadNPC(NPCID.BlueSlime);
+			Texture2D slime = TextureAssets.Npc[NPCID.BlueSlime].Value;
+			int frames = Main.npcFrameCount[NPCID.BlueSlime];
+			int frameIndex = (int)(NPC.frameCounter / 12 % frames);
+			Rectangle frame = slime.Frame(1, frames, 0, frameIndex);
+			Color glue = drawColor.MultiplyRGB(new Color(250, 250, 240)) * 0.85f;
+			SpriteEffects effects = NPC.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+			Vector2 bottom = NPC.Bottom - screenPos + new Vector2(0f, NPC.gfxOffY + 2f);
+			// Bottom slime, then the top one sitting on it a little to one side.
+			spriteBatch.Draw(slime, bottom, frame, glue, 0f, new Vector2(frame.Width / 2f, frame.Height), 1f, effects, 0f);
+			Vector2 topBottom = bottom + new Vector2(NPC.direction * 4f, -frame.Height * 0.62f);
+			spriteBatch.Draw(slime, topBottom, frame, glue, 0f, new Vector2(frame.Width / 2f, frame.Height), 0.95f, effects, 0f);
+			// Googly eyes on the top slime only. They look at the nearest player.
+			Texture2D eye = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/GooglyEye").Value;
+			Texture2D pupil = ModContent.Request<Texture2D>($"{BagofChaos.AssetPath}Textures/GooglyPupil").Value;
+			Vector2 face = topBottom - new Vector2(0f, frame.Height * 0.45f);
+			Player look = Main.player[Player.FindClosest(NPC.position, NPC.width, NPC.height)];
+			Vector2 gaze = (look.Center - NPC.Center).SafeNormalize(Vector2.Zero) * 1.5f;
+			foreach (float dx in new[] { -5f, 5f }) {
+				Vector2 at = face + new Vector2(dx, 0f);
+				spriteBatch.Draw(eye, at, null, Color.White, 0f, eye.Size() * 0.5f, 0.8f, SpriteEffects.None, 0f);
+				spriteBatch.Draw(pupil, at + gaze, null, Color.White, 0f, pupil.Size() * 0.5f, 0.8f, SpriteEffects.None, 0f);
+			}
+			return false;
+		}
 
 		public override void FindFrame(int frameHeight) {
 			NPC.frameCounter++;

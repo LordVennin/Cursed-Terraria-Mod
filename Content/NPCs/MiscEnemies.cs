@@ -1,5 +1,6 @@
 using System;
 using BagofChaos.Common;
+using BagofChaos.Common.Players;
 using BagofChaos.Common.Systems;
 using BagofChaos.Content.Buffs;
 using Microsoft.Xna.Framework;
@@ -239,6 +240,7 @@ namespace BagofChaos.Content.NPCs
 
 		public override void SetDefaults() {
 			NPC.CloneDefaults(NPCID.CaveBat);
+			NPC.damage = ContentSamples.NpcsByNetId[NPCID.CaveBat].damage; // exactly a Cave Bat's bite
 			NPC.lifeMax = 25;
 			AIType = NPCID.CaveBat;
 			AnimationType = NPCID.CaveBat;
@@ -246,9 +248,17 @@ namespace BagofChaos.Content.NPCs
 
 		public override float SpawnChance(NPCSpawnInfo spawnInfo) => SpawnCondition.Cavern.Chance * 0.08f;
 
-		public override void PostAI() => NPC.velocity *= 1.03f;
+		public override void PostAI() {
+			// A little faster than a Cave Bat, but capped so it never runs away with itself.
+			if (NPC.velocity.Length() < 7f)
+				NPC.velocity *= 1.03f;
+		}
 
-		public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo) => target.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 5);
+		public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo) {
+			target.AddBuff(ModContent.BuffType<GlueDebuff>(), 60 * 5);
+			// Contact glues you to the bat itself: enjoy the flight.
+			target.GetModPlayer<ChaosPlayer>().GlueToNPC(NPC);
+		}
 
 		public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
 			Texture2D texture = WhitenedTextures.Get(Texture);
@@ -313,24 +323,54 @@ namespace BagofChaos.Content.NPCs
 	// ---------------------------------------------------------------------------------------------------------------
 	// Sky-fallers: Spinning Worms during rain in the forest, Screaming Flinxes during blizzards in the snow.
 	// ---------------------------------------------------------------------------------------------------------------
+	// Things that fall out of the weather: spawn above the top of the screen, fall into view, and die the moment they
+	// touch a tile (no landing and walking off). Loot drops once, on the server.
 	public abstract class SkyFaller : ModNPC
 	{
 		protected abstract bool WeatherOk(Player player);
+		private ref float FallTime => ref NPC.ai[1];
+		private bool Dead { get => NPC.ai[2] == 1f; set => NPC.ai[2] = value ? 1f : 0f; }
 
 		public override void SetDefaults() {
 			NPC.aiStyle = -1;
 			NPC.knockBackResist = 0f;
 			NPC.noTileCollide = false;
+			NPC.noGravity = true; // gravity is done below, so the fall is always the same
 		}
 
 		public override float SpawnChance(NPCSpawnInfo spawnInfo) => Main.raining && WeatherOk(spawnInfo.Player) && spawnInfo.Player.ZoneOverworldHeight ? 0.12f : 0f;
 
 		public override int SpawnNPC(int tileX, int tileY) {
-			// Fall out of the sky instead of walking in from the side.
+			// Fall out of the sky instead of walking in from the side: above the top edge of any normal screen.
 			Player player = Main.player[Player.FindClosest(new Vector2(tileX * 16f, tileY * 16f), 16, 16)];
-			float x = player.Center.X + Main.rand.NextFloat(-600f, 600f);
-			float y = player.Center.Y - 700f;
-			return NPC.NewNPC(new EntitySource_SpawnNPC(), (int)x, (int)y, Type);
+			for (int tries = 0; tries < 10; tries++) {
+				float x = player.Center.X + Main.rand.NextFloat(-600f, 600f);
+				float y = player.Center.Y - 800f;
+				if (y > 16f * 5f && !Collision.SolidCollision(new Vector2(x - 16f, y - 16f), 32, 32))
+					return NPC.NewNPC(new EntitySource_SpawnNPC(), (int)x, (int)y, Type);
+			}
+			return Main.maxNPCs; // nowhere open to fall from: no spawn this time
+		}
+
+		/// <summary>Call first thing in AI. Returns false once the NPC has hit something and is dying.</summary>
+		protected bool UpdateFall() {
+			if (Dead)
+				return false;
+			FallTime++;
+			NPC.velocity.Y = System.Math.Min(NPC.velocity.Y + 0.3f, 12f);
+			NPC.velocity.X *= 0.99f;
+			bool touching = FallTime > 2 && (NPC.collideY || NPC.collideX || NPC.velocity.Y == 0f
+				|| Collision.SolidCollision(NPC.position + new Vector2(0f, NPC.velocity.Y + 2f), NPC.width, NPC.height));
+			if (touching)
+				Splat();
+			return !Dead;
+		}
+
+		protected void Splat() {
+			if (Dead || Main.netMode == NetmodeID.MultiplayerClient)
+				return;
+			Dead = true;
+			NPC.StrikeInstantKill();
 		}
 	}
 
@@ -356,11 +396,8 @@ namespace BagofChaos.Content.NPCs
 
 		public override void AI() {
 			NPC.rotation += 0.5f;
-			if (NPC.collideY || NPC.collideX || NPC.velocity.Y == 0f)
-				NPC.StrikeInstantKill();
+			UpdateFall();
 		}
-
-		public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo) => NPC.StrikeInstantKill();
 
 		public override void ModifyNPCLoot(NPCLoot npcLoot) => npcLoot.Add(ItemDropRule.Common(ItemID.Worm));
 
@@ -391,6 +428,8 @@ namespace BagofChaos.Content.NPCs
 
 		public override void AI() {
 			NPC.rotation = NPC.velocity.Y * 0.05f;
+			if (!UpdateFall())
+				return;
 			if (++NPC.ai[0] % 40 == 0) {
 				SoundEngine.PlaySound(new SoundStyle($"{BagofChaos.AssetPath}Sounds/Scream") { Volume = 1f, PitchVariance = 0.3f }, NPC.Center);
 				for (int i = 0; i < 12; i++) {
@@ -405,11 +444,9 @@ namespace BagofChaos.Content.NPCs
 					}
 				}
 			}
-			if (NPC.collideY || NPC.velocity.Y == 0f)
-				NPC.StrikeInstantKill();
 		}
 
-		public override void ModifyNPCLoot(NPCLoot npcLoot) => npcLoot.Add(ItemDropRule.Common(ItemID.FlinxFur, 1, 1, 3));
+		public override void ModifyNPCLoot(NPCLoot npcLoot) => npcLoot.Add(ItemDropRule.Common(ItemID.FlinxFur));
 
 		public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry) {
 			bestiaryEntry.Info.AddRange([BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Events.Blizzard, new FlavorTextBestiaryInfoElement("Mods.BagofChaos.Bestiary.ScreamingFlinx")]);

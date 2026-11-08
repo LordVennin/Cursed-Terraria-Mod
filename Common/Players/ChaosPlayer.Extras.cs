@@ -16,7 +16,6 @@ namespace BagofChaos.Common.Players
 	public partial class ChaosPlayer
 	{
 		// ---------------- per-frame flags ----------------
-		public DamageConversion TriforceMode;
 		public bool CompleteTriforce;
 		public bool Stalemate;
 		public bool LootScanner;
@@ -31,11 +30,13 @@ namespace BagofChaos.Common.Players
 		public float WeaponAttackSpeed;
 
 		// ---------------- saved ----------------
-		public DamageConversion HyruleMode = DamageConversion.Magic;
+		public DamageConversion HyruleMode = DamageConversion.Melee;
 		public bool ImmuneToCobwebs;
 		public bool ConfettiOnHurt;
 		public bool ExtraRowUnlocked;
-		public Item[] ExtraRow = new Item[10];
+		public Item[] ExtraRow = new Item[ExtraRowSlots];
+		public const int ExtraRowSlots = 9; // nine slots beside the trash can
+		private readonly List<Item> extraRowOverflow = new(); // items from the old ten-slot row, handed back on spawn
 		public bool RatTacksSummon;
 		public float SkewerBonusLength;
 		public List<int> TrashedTypes = new();           // last 20 distinct trashed item types (Rat Merchant stock)
@@ -45,7 +46,6 @@ namespace BagofChaos.Common.Players
 
 		// ---------------- transient state ----------------
 		public int BoxReturnSlot = -1;
-		public int BoxBorrowTimer;
 		public bool BoxBonusActive;
 		public int FartCharge;
 		private int warpaintBurst;
@@ -77,11 +77,13 @@ namespace BagofChaos.Common.Players
 			tag["trashed"] = TrashedTypes;
 			tag["rowStolen"] = RowStolen;
 			tag["stolenRow"] = StolenRow;
+			tag["hasReforged"] = HasReforged;
+			tag["hasUsedHair"] = HasUsedHairWindow;
 		}
 
 		public override void LoadData(TagCompound tag) {
 			HyruleMode = (DamageConversion)tag.GetInt("hyruleMode");
-			if (HyruleMode == DamageConversion.None) HyruleMode = DamageConversion.Magic;
+			if (HyruleMode == DamageConversion.None) HyruleMode = DamageConversion.Melee;
 			ImmuneToCobwebs = tag.GetBool("cobwebs");
 			ConfettiOnHurt = tag.GetBool("confetti");
 			ExtraRowUnlocked = tag.GetBool("extraRow");
@@ -91,9 +93,15 @@ namespace BagofChaos.Common.Players
 			if (items != null) {
 				for (int i = 0; i < ExtraRow.Length; i++)
 					ExtraRow[i] = i < items.Length && items[i] != null ? items[i] : new Item();
+				for (int i = ExtraRow.Length; i < items.Length; i++) {
+					if (items[i] != null && !items[i].IsAir)
+						extraRowOverflow.Add(items[i]);
+				}
 			}
 			TrashedTypes = new List<int>(tag.GetList<int>("trashed"));
 			RowStolen = tag.GetBool("rowStolen");
+			HasReforged = tag.GetBool("hasReforged");
+			HasUsedHairWindow = tag.GetBool("hasUsedHair");
 			var stolen = tag.Get<Item[]>("stolenRow");
 			if (stolen != null) {
 				for (int i = 0; i < StolenRow.Length; i++)
@@ -133,7 +141,8 @@ namespace BagofChaos.Common.Players
 		}
 
 		private void ResetExtras() {
-			TriforceMode = DamageConversion.None;
+			ResetRound4();
+			TriforceSources.Clear();
 			CompleteTriforce = Stalemate = LootScanner = TouchGrass = FrogShoes = NTerraria = UnstableConcoction = SpiderWings = false;
 			BanditMask = BanditBandana = BanditGoggles = BanditWarpaint = BanditSuit = BanditShoes = BanditSetBonus = false;
 			TanningMirrorHeld = ChaoticArrows = ChaoticBullets = AmmoRoulette = ChaoticDash = ChaoticBanker = false;
@@ -146,15 +155,8 @@ namespace BagofChaos.Common.Players
 			if (ChaoticBanker)
 				ApplyBankPassives();
 
-			// Complete Triforce: every vanilla damage bonus applies to every vanilla damage type.
-			if (CompleteTriforce) {
-				DamageClass[] classes = { DamageClass.Melee, DamageClass.Ranged, DamageClass.Magic, DamageClass.Summon };
-				float total = 0f;
-				foreach (DamageClass c in classes)
-					total += Player.GetDamage(c).Additive - 1f;
-				foreach (DamageClass c in classes)
-					Player.GetDamage(c) += total - (Player.GetDamage(c).Additive - 1f);
-			}
+			// Triforces: give every weapon in the inventory its effective damage class for this frame.
+			ApplyTriforceConversions();
 
 			// Weapon Attack Speed: whips and melee through vanilla attack speed; the rest through use time (ChaosGlobalItem).
 			if (Player.HasBuff<UnstablePower>() && !unstableDamageRoll)
@@ -268,20 +270,16 @@ namespace BagofChaos.Common.Players
 
 		// ------------------------------------------------------------------------------------------------------------
 		private void PostUpdateExtras() {
+			UpdateWarpaintMagnet();
+			if (Player.whoAmI == Main.myPlayer)
+				TrackHairWindow();
 			Main.tileSolid[ModContent.TileType<Content.Tiles.HollowBlockTile>()] = true;
 
 			if (FrogShoes)
 				frogLockedY = Player.position.Y;
 
-			// Chaotic weapon boxes: after the borrowed weapon's swing, go back to the box.
-			if (BoxBorrowTimer > 0) {
-				if (Player.itemAnimation == 0 && --BoxBorrowTimer <= 0) {
-					if (BoxReturnSlot >= 0 && BoxReturnSlot < 10)
-						Player.selectedItem = BoxReturnSlot;
-					BoxReturnSlot = -1;
-					BoxBonusActive = false;
-				}
-			}
+			if (Player.whoAmI == Main.myPlayer)
+				UpdateBoxSession();
 
 			// Rubber Banding Bandit Shoes: bounce off tiles and enemies.
 			if (BanditShoes && Player.whoAmI == Main.myPlayer && !Player.mount.Active) {
@@ -308,45 +306,39 @@ namespace BagofChaos.Common.Players
 			UpdateTeamTether();
 		}
 
-		// Tanning Mirror: a 75 degree cone of light above you. Enemies inside get tagged once a second; minions are kept inside.
+		// Tanning Mirror: a 75 degree cone of light above you. Enemies inside get tagged once a second.
+		// Minions inside play pinball (see ChaosGlobalProjectile.TanningPinball).
+		public const float TanHalfAngle = 37.5f * (float)Math.PI / 180f;
+		public const float TanRange = 420f;
+		public Vector2 TanApex => Player.Top;
+		public float TanFloorY => Player.Top.Y - 12f; // the bumper floor just above your head
+
+		public bool InTanCone(Vector2 pos) {
+			Vector2 d = pos - TanApex;
+			if (d.Length() > TanRange || d.Y > 0f) return false;
+			float angle = Math.Abs(MathHelper.WrapAngle(d.ToRotation() + MathHelper.PiOver2));
+			return angle <= TanHalfAngle;
+		}
+
 		private void UpdateTanningMirror() {
-			const float HalfAngle = 37.5f * (float)Math.PI / 180f;
-			const float Range = 420f;
-			Vector2 apex = Player.Top;
+			Vector2 apex = TanApex;
 			for (int i = 0; i < 6; i++) {
-				float angle = -MathHelper.PiOver2 + Main.rand.NextFloat(-HalfAngle, HalfAngle);
-				Vector2 point = apex + angle.ToRotationVector2() * Main.rand.NextFloat(20f, Range);
+				float angle = -MathHelper.PiOver2 + Main.rand.NextFloat(-TanHalfAngle, TanHalfAngle);
+				Vector2 point = apex + angle.ToRotationVector2() * Main.rand.NextFloat(20f, TanRange);
 				Lighting.AddLight(point, 1f, 0.9f, 0.5f);
 				Dust dust = Dust.NewDustPerfect(point, DustID.GoldFlame, Vector2.Zero, 0, default, 0.8f);
 				dust.noGravity = true;
 			}
-			bool InCone(Vector2 pos) {
-				Vector2 d = pos - apex;
-				if (d.Length() > Range || d.Y > 0f) return false;
-				float angle = Math.Abs(MathHelper.WrapAngle(d.ToRotation() + MathHelper.PiOver2));
-				return angle <= HalfAngle;
+			// The bumper floor.
+			for (int i = 0; i < 2; i++) {
+				Dust dust = Dust.NewDustPerfect(new Vector2(apex.X + Main.rand.NextFloat(-40f, 40f), TanFloorY), DustID.YellowTorch, Vector2.Zero, 0, default, 0.9f);
+				dust.noGravity = true;
 			}
 			if (++tanTagTimer >= 60) {
 				tanTagTimer = 0;
 				foreach (NPC npc in Main.ActiveNPCs) {
-					if (ChaosUtils.IsHostile(npc) && InCone(npc.Center))
+					if (ChaosUtils.IsHostile(npc) && InTanCone(npc.Center))
 						BagofChaos.SendApplyBuffToNPC(npc, ModContent.BuffType<Tanned>(), 90);
-				}
-			}
-			foreach (Projectile minion in Main.ActiveProjectiles) {
-				if (minion.owner != Player.whoAmI || !minion.minion || minion.sentry)
-					continue;
-				minion.velocity *= 1.02f; // bonus speed
-				if (!InCone(minion.Center)) {
-					// Bounce back toward the cone's axis.
-					Vector2 toAxis = (apex + new Vector2(0f, -Range * 0.5f) - minion.Center).SafeNormalize(-Vector2.UnitY);
-					minion.velocity = toAxis * Math.Max(6f, minion.velocity.Length());
-					minion.Center = Vector2.Lerp(minion.Center, apex + new Vector2(0f, -Range * 0.5f), 0.05f);
-				}
-				foreach (Projectile other in Main.ActiveProjectiles) {
-					if (other.whoAmI <= minion.whoAmI || other.owner != Player.whoAmI || !other.minion || !other.Hitbox.Intersects(minion.Hitbox))
-						continue;
-					(minion.velocity, other.velocity) = (other.velocity, minion.velocity); // they bounce off each other
 				}
 			}
 		}
@@ -369,7 +361,6 @@ namespace BagofChaos.Common.Players
 					Player.statLife = 1;
 			}
 			if (!sick && wasPotionSick) {
-				Projectile.NewProjectile(Player.GetSource_Accessory(Player.HeldItem), Player.Center, Vector2.Zero, ModContent.ProjectileType<Content.Projectiles.CanExplosion>(), 60, 8f, Player.whoAmI);
 				int explosion = Projectile.NewProjectile(Player.GetSource_Accessory(Player.HeldItem), Player.Center, Vector2.Zero, ModContent.ProjectileType<Content.Projectiles.CanExplosion>(), 60, 8f, Player.whoAmI);
 				if (explosion >= 0) Main.projectile[explosion].DamageType = DamageClass.Magic;
 				Player.KillMe(PlayerDeathReason.ByCustomReason(Terraria.Localization.NetworkText.FromKey("Mods.BagofChaos.DeathMessages.UnstableConcoction", Player.name)), 9999, 0);
@@ -413,14 +404,21 @@ namespace BagofChaos.Common.Players
 		// Hooks
 		// ------------------------------------------------------------------------------------------------------------
 		public override void UpdateLifeRegen() {
-			if (TouchGrass) {
-				int tx = (int)(Player.Center.X / 16f);
+			// Touch Grass: +5 HP per second (lifeRegen is in half-HP per second, so +10) while standing on plain,
+			// corrupt or crimson grass. Not jungle, not hallowed, not while airborne.
+			if (TouchGrass && Player.velocity.Y == 0f && Player.gravDir == 1f) {
 				int ty = (int)((Player.Bottom.Y + 2f) / 16f);
-				if (WorldGen.InWorld(tx, ty, 5) && Main.tile[tx, ty].HasTile) {
+				bool onGrass = false;
+				foreach (float fx in new[] { Player.position.X + 2f, Player.Center.X, Player.position.X + Player.width - 2f }) {
+					int tx = (int)(fx / 16f);
+					if (!WorldGen.InWorld(tx, ty, 5) || !Main.tile[tx, ty].HasTile)
+						continue;
 					int type = Main.tile[tx, ty].TileType;
 					if (type == TileID.Grass || type == TileID.CorruptGrass || type == TileID.CrimsonGrass)
-						Player.lifeRegen += 10;
+						onGrass = true;
 				}
+				if (onGrass)
+					Player.lifeRegen += 10;
 			}
 			if (Stalemate) {
 				Player.lifeRegen = 0;
@@ -434,6 +432,9 @@ namespace BagofChaos.Common.Players
 		}
 
 		public override bool CanBeHitByProjectile(Projectile proj) {
+			// Warpaint magnet: anything inside the field is being captured, not hitting you.
+			if (WarpaintMagnetActive && InWarpaintField(proj))
+				return false;
 			if (Stalemate && proj.npcProj)
 				return false;
 			// Rubber Banding Bandit Suit: 10% chance any projectile bounces off you.
@@ -471,30 +472,16 @@ namespace BagofChaos.Common.Players
 		}
 
 		public override void ModifyWeaponDamage(Item item, ref StatModifier damage) {
-			if (BoxBonusActive)
-				damage.Flat += 10f;
-			if (TriforceMode != DamageConversion.None && NeedsConversion(item.DamageType)) {
-				// Converted: the target class's bonuses apply instead, at -10%.
-				DamageClass target = TriforceMode switch { DamageConversion.Magic => DamageClass.Magic, DamageConversion.Melee => DamageClass.Melee, DamageConversion.Ranged => DamageClass.Ranged, _ => DamageClass.Summon };
-				damage = damage.CombineWith(Player.GetDamage(target));
+			if (BoxBonusActive && BoxClassMatches(item))
+				damage.Base += 10f;
+			// Individual Triforce pieces cost 10%; the Complete Triforce is free.
+			if (!CompleteTriforce && item.TryGetGlobalItem(out GlobalItems.TriforceGlobalItem tri) && tri.ConvertedFrom != null)
 				damage *= 0.9f;
-			}
 			if ((ChaoticArrows && item.useAmmo == AmmoID.Arrow) || (ChaoticBullets && item.useAmmo == AmmoID.Bullet) || (AmmoRoulette && (item.useAmmo == AmmoID.Arrow || item.useAmmo == AmmoID.Bullet))) {
 				int distinct = DistinctAmmoCount(item);
 				if (distinct >= 2)
 					damage.Flat += distinct;
 			}
-		}
-
-		private bool NeedsConversion(DamageClass original) {
-			if (CompleteTriforce)
-				return true;
-			return TriforceMode switch {
-				DamageConversion.Magic => original.CountsAsClass(DamageClass.Melee) || original.CountsAsClass(DamageClass.Ranged),
-				DamageConversion.Melee => original.CountsAsClass(DamageClass.Magic) || original.CountsAsClass(DamageClass.Ranged),
-				DamageConversion.Ranged => original.CountsAsClass(DamageClass.Melee) || original.CountsAsClass(DamageClass.Magic),
-				_ => false,
-			};
 		}
 
 		// Chaotic ammo: pick a random equipped ammo type each shot and only allow that one.

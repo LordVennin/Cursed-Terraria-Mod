@@ -34,9 +34,25 @@ namespace BagofChaos.Content.Tiles
 		}
 	}
 
+	// Hollow Block: black glass with gold trim. Players always pass through (from every side, no need to hold down);
+	// everything else treats it as solid. It can be placed in thin air: a 1x1 object with no anchors skips vanilla's
+	// "needs a neighbouring block or wall" rule, while the normal occupancy checks still apply. So floating bridges work.
 	public class HollowBlockTile : SelectivelySolidBlock
 	{
 		protected override Color MapColor => new Color(40, 40, 50);
+
+		public override void SetStaticDefaults() {
+			base.SetStaticDefaults();
+			Main.tileFrameImportant[Type] = true;
+			TileObjectData.newTile.CopyFrom(TileObjectData.Style1x1);
+			TileObjectData.newTile.AnchorBottom = Terraria.DataStructures.AnchorData.Empty;
+			TileObjectData.newTile.AnchorTop = Terraria.DataStructures.AnchorData.Empty;
+			TileObjectData.newTile.AnchorLeft = Terraria.DataStructures.AnchorData.Empty;
+			TileObjectData.newTile.AnchorRight = Terraria.DataStructures.AnchorData.Empty;
+			TileObjectData.newTile.LavaDeath = false;
+			TileObjectData.newTile.UsesCustomCanPlace = true;
+			TileObjectData.addTile(Type);
+		}
 	}
 
 	public class BlueCoreBlockTile : SelectivelySolidBlock

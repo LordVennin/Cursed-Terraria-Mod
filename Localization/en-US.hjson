@@ -150,7 +150,8 @@ Mods: {
 				DisplayName: Green Pong Power
 				Tooltip:
 					'''
-					Four longer paddles follow your cursor on every edge of the screen
+					Four longer paddles: two on the top of the screen and two on the bottom
+					One pair follows your cursor, the other pair mirrors it
 					Ball speed doubled, up to 10 balls at once
 					Balls bounce off enemies back to the paddles and pop after 5 paddle bounces
 					It's green. That means it's better.
@@ -564,7 +565,8 @@ Mods: {
 				Tooltip:
 					'''
 					Solid for everything except players
-					Walk right through. Watch the zombies not.
+					Walk right through from any side. Watch the zombies not.
+					Can be placed in mid-air, no support needed
 					'''
 			}
 
@@ -599,8 +601,9 @@ Mods: {
 				DisplayName: Triforce of Wisdom
 				Tooltip:
 					'''
-					Melee and ranged damage count as magic damage
-					-10% damage
+					Melee and ranged weapons become magic weapons (ammo and projectiles included)
+					Converted weapons use the new class's bonuses, not the old one's. Summon damage is left alone.
+					-10% damage on converted weapons
 					'''
 			}
 
@@ -608,8 +611,9 @@ Mods: {
 				DisplayName: Triforce of Power
 				Tooltip:
 					'''
-					Magic and ranged damage count as melee damage
-					-10% damage
+					Magic and ranged weapons become melee weapons (ammo and projectiles included)
+					Converted weapons use the new class's bonuses, not the old one's. Summon damage is left alone.
+					-10% damage on converted weapons
 					'''
 			}
 
@@ -617,22 +621,22 @@ Mods: {
 				DisplayName: Triforce of Courage
 				Tooltip:
 					'''
-					Melee and magic damage count as ranged damage
-					-10% damage
+					Melee and magic weapons become ranged weapons (ammo and projectiles included)
+					Converted weapons use the new class's bonuses, not the old one's. Summon damage is left alone.
+					-10% damage on converted weapons
 					'''
 			}
 
 			CompleteTriforceOfHyrule: {
-				ModeMagic: The Triforce glows blue. Everything is magic now.
-				ModeMelee: The Triforce glows red. Everything is melee now.
-				ModeRanged: The Triforce glows green. Everything is ranged now.
-				ModeSummon: The Triforce glows yellow. Everything is summon now.
+				ModeMagic: The lower left Triforce glows blue. Everything is magic now.
+				ModeMelee: The top Triforce glows red. Everything is melee now.
+				ModeRanged: The lower right Triforce glows green. Everything is ranged now.
+				ModeSummon: The whole Triforce glows gold. Everything is summon now.
 				DisplayName: Complete Triforce of Hyrule
 				Tooltip:
 					'''
-					All vanilla damage bonuses apply to all vanilla damage types
-					Right click to choose what everything converts into (Blue: Magic, Red: Melee, Green: Ranged, Yellow: Summoner)
-					-10% damage. The legend says nothing about balance.
+					Every vanilla weapon becomes the chosen class (ammo and projectiles included), with no damage penalty
+					Right click to cycle: Melee (red), Ranged (green), Magic (blue), Summoner (gold)
 					'''
 			}
 
@@ -752,8 +756,9 @@ Mods: {
 				DisplayName: Crushed Glass Potion
 				Tooltip:
 					'''
-					All glass and sand related blocks are invisible to you
-					15 minute duration
+					Glass and sand blocks, glass walls, gemspark, and anything crafted from glass or sand become invisible to you
+					They are still there. Mind the furniture.
+					10 minute duration
 					'''
 			}
 
@@ -761,8 +766,8 @@ Mods: {
 				DisplayName: Crushed Dirt Potion
 				Tooltip:
 					'''
-					Dirt blocks glow unreasonably bright
-					5 minute duration
+					Every dirt block lights up like a torch. A brown torch.
+					10 minute duration
 					'''
 			}
 
@@ -797,7 +802,7 @@ Mods: {
 				DisplayName: Rat Package Co.
 				Tooltip:
 					'''
-					Permanent: expands your inventory down by one row
+					Permanent: nine extra inventory slots along the bottom, right beside the trash can
 					The rats deliver. The rats always deliver.
 					'''
 			}
@@ -852,7 +857,7 @@ Mods: {
 				Tooltip:
 					'''
 					Summons the Slot-bar Caterpillar
-					Hardmode only. Keep an eye on your bottom row.
+					Hardmode only. It will look a lot like your hotbar.
 					'''
 			}
 
@@ -879,8 +884,9 @@ Mods: {
 				DisplayName: "\"Harpy\" Wings"
 				Tooltip:
 					'''
-					Summons a harpy that sits behind your head
-					Hold jump in the air to glide as if you had wings. You don't. She does.
+					A harpy grabs you by the shoulders and tries her very best to carry you
+					Hold jump while falling to glide. That's all she can manage.
+					Immunity to fall damage
 					'''
 			}
 
@@ -888,7 +894,7 @@ Mods: {
 				DisplayName: Rat Cart
 				Tooltip:
 					'''
-					Summons a rideable rat minecart
+					A minecart. Goes in your minecart slot.
 					Squeaks occasionally. Faster underground.
 					'''
 			}
@@ -897,8 +903,9 @@ Mods: {
 				DisplayName: Sharkboard
 				Tooltip:
 					'''
-					Summons a rideable shark
-					Breathe underwater and move much faster in it. Drops from sharks, who are not happy about it.
+					Summons a shark to stand on
+					Breathe underwater, and swim fast (up and down too). Slow and sluggish on land.
+					Drops from sharks, who are not happy about it.
 					'''
 			}
 
@@ -907,7 +914,7 @@ Mods: {
 				Tooltip:
 					'''
 					Right click to talk to the Guide from anywhere
-					Right click again to close. Requires a living Guide, which is on you.
+					Right click again to close. Works even if the Guide is dead. Especially then.
 					'''
 			}
 
@@ -915,8 +922,8 @@ Mods: {
 				DisplayName: Shopkeeper's Portable Shop of Keeping
 				Tooltip:
 					'''
-					Right click to open a sell-only shop from anywhere
-					Right click again to close. Nothing to buy. Everything to sell.
+					Right click to open the Merchant's shop from anywhere, for selling only
+					Right click again to close. Works even if the Merchant is dead or never showed up.
 					'''
 			}
 
@@ -925,7 +932,7 @@ Mods: {
 				Tooltip:
 					'''
 					Right click to open the Goblin Tinkerer's reforge menu from anywhere
-					Right click again to close
+					Right click again to close. The Goblin doesn't need to be alive.
 					'''
 			}
 
@@ -934,7 +941,7 @@ Mods: {
 				Tooltip:
 					'''
 					Right click to open the Stylist's hair menu from anywhere
-					Right click again to close
+					Right click again to close. The Stylist doesn't need to be alive.
 					'''
 			}
 
@@ -942,8 +949,8 @@ Mods: {
 				DisplayName: Angler's Pocketguide
 				Tooltip:
 					'''
-					Right click to check the Angler's fishing quest from anywhere
-					Right click again to close
+					Right click to check (and turn in) the Angler's fishing quest from anywhere
+					Right click again to close. The Angler doesn't need to be alive. He'd prefer it.
 					'''
 			}
 
@@ -951,8 +958,8 @@ Mods: {
 				DisplayName: NPC Directory
 				Tooltip:
 					'''
-					Right click to open a list of every town NPC living in your world
-					Pick one to talk to them from wherever you are
+					Right click to open a list of every town NPC that has ever moved into your world
+					Pick one to talk to them from wherever you are, alive or not, with all their usual options
 					'''
 			}
 
@@ -1039,6 +1046,7 @@ Mods: {
 
 			RubberBandingBanditWarpaint: {
 				DisplayName: Rubber Banding Bandit Warpaint
+				SetBonus: Press {0} to pull in every projectile within 6 tiles for 5 seconds, then fire them back out as your own (45 second cooldown)
 				Tooltip:
 					'''
 					15% increased melee damage and 10% increased melee attack speed
@@ -1047,7 +1055,11 @@ Mods: {
 			}
 
 			RubberBandingBanditSuit: {
-				SetBonus: All your projectiles have a 50% chance to bounce off tiles, +1 bounce for weapon projectiles
+				SetBonus:
+					'''
+					Your projectiles bounce off tiles up to 5 times, losing 10% damage per bounce
+					After hitting an enemy they snap straight at the next one, until they hit a wall again
+					'''
 				DisplayName: Rubber Banding Bandit Suit
 				Tooltip:
 					'''
@@ -1069,7 +1081,7 @@ Mods: {
 				DisplayName: Chaotic Sword Box
 				Tooltip:
 					'''
-					Attacking randomly swings a sword from your hotbar
+					Hold attack to swing a random sword from your hotbar, switching to another every half second
 					+10 base melee damage
 					'''
 			}
@@ -1078,7 +1090,7 @@ Mods: {
 				DisplayName: Chaotic Ranger Box
 				Tooltip:
 					'''
-					Attacking randomly fires a ranged weapon from your hotbar
+					Hold attack to fire a random ranged weapon from your hotbar, switching every half second (+10 on every arrow and bullet)
 					+10 base ranged damage
 					'''
 			}
@@ -1087,7 +1099,7 @@ Mods: {
 				DisplayName: Chaotic Magic Box
 				Tooltip:
 					'''
-					Attacking randomly casts a magic weapon from your hotbar
+					Hold attack to cast with a random magic weapon from your hotbar, switching every half second
 					+10 base magic damage
 					'''
 			}
@@ -1096,8 +1108,8 @@ Mods: {
 				DisplayName: Chaotic Whip Box
 				Tooltip:
 					'''
-					Attacking randomly cracks a whip from your hotbar
-					+10 base summon damage
+					Hold attack to crack a random whip from your hotbar, switching every half second
+					+10 base whip damage
 					'''
 			}
 
@@ -1105,8 +1117,8 @@ Mods: {
 				DisplayName: Slotter Pillar
 				Tooltip:
 					'''
-					Your inventory slots become minions, but only while your inventory is open
-					Random slots dash at enemies and return. Closing the inventory recalls them all.
+					Your inventory slots become minions, inventory open or not
+					Random slots dash at enemies, showing the item inside, then go back to their slot
 					'''
 			}
 
@@ -1116,16 +1128,27 @@ Mods: {
 					'''
 					Hold it to shine a 75 degree cone of light above you
 					Enemies in the cone are tagged once a second; tagged enemies take extra minion damage
-					Your minions are kept inside the cone, move faster, and bounce off its edges and each other
+					Your minions turn into pinballs inside the cone: they bounce off its walls, each other,
+					and a bumper floor just above your head, hitting everything they touch
 					'''
 			}
 
 			NailAndHammer: {
-				DisplayName: Nail and Hammer
+				DisplayName: Nagel und Hammer
 				Tooltip:
 					'''
-					Left click to throw nails that apply the Nails debuff
-					Right click to slam down a hammer that deals triple damage to nailed enemies
+					Left click to swing a big hammer. Right click to throw nails, fast.
+					Nails stick in enemies (up to 15). Each nail adds damage to your next hammer hit on that enemy, and the hit pulls one out.
+					'''
+			}
+
+			MoltenNailAndHammer: {
+				DisplayName: Geschmolzener Nagel und Hammer
+				Tooltip:
+					'''
+					Left click to throw a giant spinning molten hammer that comes back. It burns.
+					Hitting a nailed enemy pulls every nail out at once in one big explosion
+					Right click to throw red-hot nails: slower, bigger, and they burn
 					'''
 			}
 
@@ -1134,16 +1157,18 @@ Mods: {
 				Tooltip:
 					'''
 					Killing blows turn enemies into snails
-					Their loot is replaced with snails. Just snails.
+					Their loot is replaced with snails. Just snails. Catch them with a bug net.
+					Snails are immune to it
 					'''
 			}
 
 			HotSnailFlail: {
-				DisplayName: Hot Snail Flail
+				DisplayName: Magma Snail Flail
 				Tooltip:
 					'''
 					Killing blows turn enemies into magma snails
-					Their loot is replaced with magma snails. Sets things on fire.
+					Their loot is replaced with magma snails (catch them with a lavaproof bug net). Sets things on fire.
+					Snails are immune to it
 					'''
 			}
 
@@ -1151,7 +1176,7 @@ Mods: {
 				DisplayName: Balls of Confetti
 				Tooltip:
 					'''
-					Light disc that does 1 damage, pierces infinitely, ignores immunity frames and defense
+					Light disc that does 1 damage, flies straight through enemies, ignores immunity frames and defense
 					Stacks to 10, throw one per stack. The Party Girl drops them in hardmode.
 					'''
 			}
@@ -1160,7 +1185,7 @@ Mods: {
 				DisplayName: Axe Me a Question
 				Tooltip:
 					'''
-					A throwable axe that damages any tree it hits
+					A throwable copper axe that instantly chops down any tree it hits
 					20% chance to confuse enemies
 					'''
 			}
@@ -1180,9 +1205,9 @@ Mods: {
 				DisplayName: Rat Tacks
 				Tooltip:
 					'''
-					Throws 2-3 rats on the ground that bite anything that touches them
-					Right click to toggle between melee and summon damage
-					Up to 20 at a time, 40 seconds each
+					Throws 2-3 rats that sit on the ground as traps and bite anything that steps on them
+					Each rat lasts 3 bites or 30 seconds. Up to 20 rats; new throws replace the oldest.
+					Right click to toggle between melee and summon damage (rats already out switch too)
 					'''
 			}
 
@@ -1223,8 +1248,8 @@ Mods: {
 				DisplayName: Stacks of Fish
 				Tooltip:
 					'''
-					Summons three goldfish that sit on your head
-					Three fish take one minion slot. More fish stack higher.
+					Summons a goldfish that sits on your head. Every use adds another fish to the tower.
+					Each fish shoots goldfish at the closest enemy in its own range (whip-marked enemies first)
 					'''
 			}
 
@@ -1232,8 +1257,8 @@ Mods: {
 				DisplayName: Succ.
 				Tooltip:
 					'''
-					Pulls every town NPC and player on screen to you
-					Through walls. Succ.
+					Each click shoves every town NPC and player on screen toward you
+					The shove stacks with their current speed. Click a lot. Succ.
 					'''
 			}
 
@@ -1241,9 +1266,10 @@ Mods: {
 				DisplayName: Fart Reverb.mp4
 				Tooltip:
 					'''
-					Hold to charge for up to 20 seconds, release to detonate
-					Deals up to 800 damage to everything, including you, and blows up blocks within up to 50 tiles
-					Using it at full charge petrifies you for 10 seconds. Has unknown power and consequences.
+					Hold to charge, release to detonate at the current charge
+					Charges to 50% over 14 seconds, then jumps to 100% at exactly 15 seconds
+					Deals up to 800 damage to everything (enemies, town NPCs, other players and you) and blows up blocks within up to 50 tiles
+					Releasing at 100% petrifies you for 10 seconds. Has unknown power and consequences.
 					'''
 			}
 
@@ -1278,8 +1304,37 @@ Mods: {
 				DisplayName: Slotting Pillar
 				Tooltip:
 					'''
-					Infinite ammo for bows and guns, but only while your inventory is open
-					Fires a random inventory slot (never the hotbar) that boomerangs back after it hits something
+					Infinite ammo for bows and guns. You don't need your inventory open.
+					A random inventory slot (never the hotbar) launches itself where you aim, then flies back into place
+					after it hits something, hits a wall, or leaves the screen. Your items stay put.
+					'''
+			}
+
+			Wob: {
+				DisplayName: Wob
+				Tooltip:
+					'''
+					It's a bow. Backwards.
+					Arrows fly out of the back, away from where you aim
+					'''
+			}
+
+			SlamDunker: {
+				DisplayName: Slam Dunker
+				Tooltip:
+					'''
+					Puts down a basketball hoop that shoots basketballs at enemies
+					Right click next to one of its basketballs to slam it into your nearest hoop
+					The hoop answers with a swarm of homing basketballs
+					'''
+			}
+
+			OceanInAFishbowl: {
+				DisplayName: Ocean in a Fishbowl
+				Tooltip:
+					'''
+					Air is now water. For you.
+					You swim everywhere, water gear and water mounts work anywhere, and you drown in open air without gills
 					'''
 			}
 		}
@@ -1375,11 +1430,6 @@ Mods: {
 				Description: Your inventory is fighting for you. Keep it open.
 			}
 
-			HarpyMountBuff: {
-				DisplayName: Harpy Wings
-				Description: A harpy is carrying you. Sort of.
-			}
-
 			RatCartBuff: {
 				DisplayName: Rat Cart
 				Description: Squeak squeak
@@ -1393,6 +1443,16 @@ Mods: {
 			SpiderOnABallBuff: {
 				DisplayName: Spider on a Ball
 				Description: A spinning spider on a spinning ball follows you
+			}
+
+			WarpaintCooldown: {
+				DisplayName: Warpaint Recharging
+				Description: The projectile magnet needs a breather
+			}
+
+			WarpaintMagnetBuff: {
+				DisplayName: Projectile Magnet
+				Description: Every projectile nearby is coming to you. Then it's going back.
 			}
 		}
 
@@ -1461,7 +1521,6 @@ Mods: {
 
 			SlotBarCaterpillar: {
 				DisplayName: Slot-bar Caterpillar
-				Stolen: The Slot-bar Caterpillar stole your bottom inventory row!
 				Returned: Your bottom inventory row crawls back to you.
 			}
 
@@ -1489,9 +1548,20 @@ Mods: {
 
 			Shlue: {
 				DisplayName: Shlue
-				Chat0: ...
-				Chat1: *sticks to you*
-				Chat2: *googly eyes rattle*
+				Chat0: "..."
+				Chat1: "*sticks to you*"
+				Chat2: "*googly eyes rattle*"
+				Chat3: We're not stuck together. We're just very close.
+				Chat4: Ever been glued to a zombie? Ten out of ten. Would stick again.
+				Chat5: I'm not slimy, I'm adhesive. There's a difference and it's legal.
+				Chat6: The bottom one does all the work. I just sit here and look.
+				Chat7: What do you call two glue slimes? Shlue. That's it. That's the joke.
+				Chat8: I tried to leave once. Five seconds later I was still there.
+				Chat9: Fire? We don't talk about fire.
+				Chat10: Gel is a lifestyle. Glue is a commitment.
+				Chat11: Bounce bounce. That was us bouncing. You can't tell because we're stuck.
+				Chat12: If you lick us we will not come off. We've checked.
+				Chat13: I have the eyes. He has the opinions. Don't ask him.
 			}
 		}
 
@@ -1524,6 +1594,13 @@ Mods: {
 			ChainsawYoyo.DisplayName: Chained Chainsaw
 			GravityFlailProjectile.DisplayName: Gravity Flail
 			SkewerProjectile.DisplayName: BBQ Skewer
+			GoldfishShot.DisplayName: Goldfish
+			DunkHoop.DisplayName: Basketball Hoop
+			Basketball.DisplayName: Basketball
+			HomingBasketball.DisplayName: Basketball
+			MoltenNail.DisplayName: Molten Nail
+			MoltenHammerProjectile.DisplayName: Geschmolzener Hammer
+			NailExplosion.DisplayName: Nail Explosion
 			FishStackMinion.DisplayName: Stacked Fish
 			MegaFartExplosion.DisplayName: Fart Reverb.mp4
 			WoopsArrow.DisplayName: Woops! Arrow
@@ -1568,7 +1645,7 @@ Mods: {
 			ChaoticBeholder: Sells everything with "Chaos" in the name once the Chaotic Slime is dead. Talking to him is a one in twenty gamble.
 			Shlue: Two glue slimes in a trench coat, with googly eyes. Moves in after fifty glue creatures have died. Always called Shlue.
 			ChaoticSlime: A King Slime that can't settle on a colour and keeps teleporting. Beat it to unlock the Chaotic Beholder.
-			SlotBarCaterpillar: Steals your bottom inventory row and wears it as a body. Wiggles. Throws your stuff at you. 10,000 HP of pure inconvenience.
+			SlotBarCaterpillar: Wears a copy of your hotbar as a body. Wiggles. Throws the copies at you, and every so often uses one of your own weapons on you. Your actual items are fine. 10,000 HP of pure inconvenience.
 			BonemassOfSkeletron: One time in four the Old Man's curse summons this instead. A slow heap of bones that spews bones, sweeps hands, rains bones and raises skeletons. Legally Skeletron.
 		}
 
@@ -1603,6 +1680,7 @@ Mods: {
 			NoNPC: "There is no {0} living in this world. Awkward."
 			SellOnly: Welcome to the portable shop. We buy. We don't sell. It's a lifestyle.
 			DirectoryTitle: NPC Directory
+			Absent: (not around)
 		}
 
 		DeathMessages.FartMp4: "{0} charged the Fart Reverb.mp4 all the way."
@@ -1648,6 +1726,24 @@ Mods: {
 					Tooltip: Whether the Fart Reverb.mp3 shockwave launches players (including the user) across the map.
 				}
 			}
+		}
+
+		Keybinds: {
+			WarpaintMagnet.DisplayName: Rubber Banding Bandit Warpaint: projectile magnet
+			Unbound: (unbound key)
+		}
+
+		Triforce: {
+			Converted: ({0})
+			Melee: Melee
+			Ranged: Ranged
+			Magic: Magic
+			Summon: Summon
+		}
+
+		Conditions: {
+			Reforged: After your first reforge
+			HadHaircut: After your first haircut
 		}
 	}
 }

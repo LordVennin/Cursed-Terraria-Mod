@@ -9,7 +9,8 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Items.Tools
 {
-	// Right-click tools that open a town NPC's interface from anywhere (as long as that NPC lives in your world).
+	// Right-click tools that open a town NPC's interface from anywhere. The NPC doesn't need to be nearby, alive, or even
+	// in the world (see RemoteMenuSystem). Right-click again to close. They never summon anybody.
 	public abstract class RemoteNPCTool : ModItem
 	{
 		protected abstract int NPCType { get; }
@@ -72,7 +73,14 @@ namespace BagofChaos.Content.Items.Tools
 		protected override RemoteMenu Menu => RemoteMenu.Directory;
 
 		public override void AddRecipes() {
-			CreateRecipe().AddIngredient(ItemID.Book).AddIngredient(ItemID.Wire, 5).AddTile(TileID.WorkBenches).Register();
+			CreateRecipe()
+				.AddIngredient<GuidesGuidebookOfGuiding>()
+				.AddIngredient<ShopkeepersPortableShopOfKeeping>()
+				.AddIngredient<GoblinYourMoney>()
+				.AddIngredient<SnippingTool>()
+				.AddIngredient<AnglersPocketguide>()
+				.AddTile(TileID.TinkerersWorkbench)
+				.Register();
 		}
 	}
 

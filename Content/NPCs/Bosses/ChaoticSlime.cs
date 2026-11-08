@@ -14,6 +14,7 @@ namespace BagofChaos.Content.NPCs.Bosses
 	public class ChaoticSlime : ModNPC
 	{
 		public override string Texture => "Terraria/Images/NPC_" + NPCID.KingSlime;
+		public override string BossHeadTexture => "BagofChaos/Content/NPCs/Bosses/ChaoticSlime_Head_Boss";
 
 		public override void SetStaticDefaults() {
 			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.KingSlime];

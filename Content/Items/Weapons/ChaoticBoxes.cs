@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BagofChaos.Common.Players;
 using Terraria;
 using Terraria.ID;
@@ -5,12 +6,24 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Items.Weapons
 {
-	// Chaotic weapon boxes: using one picks a random weapon of its class from your hotbar and swings/fires it with +10 base damage.
+	// Chaotic weapon boxes: hold the attack button with one and it hands you a random weapon of its class from your hotbar,
+	// then swaps to another one every half second (between attacks, never mid-swing). The weapon in hand works exactly as
+	// normal, with +10 base damage. Let go and you're back on the box. Never consumed.
 	// (Sold by the Chaotic Beholder after the Chaotic Slime is beaten.)
 	public abstract class ChaoticWeaponBox : ModItem
 	{
 		protected abstract DamageClass Class { get; }
-		protected virtual bool Matches(Item item) => item.damage > 0 && item.CountsAsClass(Class) && !item.accessory;
+		public virtual bool Matches(Item item) => item.damage > 0 && item.CountsAsClass(Class) && !item.accessory;
+
+		public static List<int> Candidates(Player player, ChaoticWeaponBox box) {
+			var candidates = new List<int>();
+			for (int i = 0; i < 10; i++) {
+				Item item = player.inventory[i];
+				if (!item.IsAir && item.ModItem is not ChaoticWeaponBox && box.Matches(item))
+					candidates.Add(i);
+			}
+			return candidates;
+		}
 
 		public override void SetDefaults() {
 			Item.width = 26;
@@ -28,28 +41,18 @@ namespace BagofChaos.Content.Items.Weapons
 		public override bool CanUseItem(Player player) {
 			if (player.whoAmI != Main.myPlayer)
 				return false;
-			// Pick a random matching weapon from the hotbar (excluding this box) and switch to it for one attack.
-			var candidates = new System.Collections.Generic.List<int>();
-			for (int i = 0; i < 10; i++) {
-				Item item = player.inventory[i];
-				if (!item.IsAir && item.type != Type && item.ModItem is not ChaoticWeaponBox && Matches(item))
-					candidates.Add(i);
-			}
+			List<int> candidates = Candidates(player, this);
 			if (candidates.Count == 0)
 				return false;
-			ChaosPlayer chaos = player.GetModPlayer<ChaosPlayer>();
-			chaos.BoxReturnSlot = player.selectedItem;
-			chaos.BoxBorrowTimer = 2;
-			chaos.BoxBonusActive = true;
-			player.selectedItem = candidates[Main.rand.Next(candidates.Count)];
-			return false; // the borrowed weapon is used instead
+			player.GetModPlayer<ChaosPlayer>().StartBoxSession(this, candidates[Main.rand.Next(candidates.Count)]);
+			return false; // the weapon in hand does the attacking
 		}
 	}
 
 	public class ChaoticSwordBox : ChaoticWeaponBox
 	{
 		protected override DamageClass Class => DamageClass.Melee;
-		protected override bool Matches(Item item) => base.Matches(item) && item.useStyle == ItemUseStyleID.Swing && item.pick == 0 && item.axe == 0 && item.hammer == 0;
+		public override bool Matches(Item item) => base.Matches(item) && item.useStyle == ItemUseStyleID.Swing && item.pick == 0 && item.axe == 0 && item.hammer == 0;
 	}
 
 	public class ChaoticRangerBox : ChaoticWeaponBox
@@ -65,6 +68,6 @@ namespace BagofChaos.Content.Items.Weapons
 	public class ChaoticWhipBox : ChaoticWeaponBox
 	{
 		protected override DamageClass Class => DamageClass.SummonMeleeSpeed;
-		protected override bool Matches(Item item) => item.damage > 0 && item.shoot > 0 && ProjectileID.Sets.IsAWhip[item.shoot];
+		public override bool Matches(Item item) => item.damage > 0 && item.shoot > 0 && ProjectileID.Sets.IsAWhip[item.shoot];
 	}
 }

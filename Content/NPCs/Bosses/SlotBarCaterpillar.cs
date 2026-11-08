@@ -14,8 +14,9 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.NPCs.Bosses
 {
-	// Steals the closest player's bottom inventory row and wears it as a body. Wiggles like a Pokey.
-	// Attacks: wiggle-charge, boomerang segments, segment rain, spin-dash. 10,000 HP.
+	// Copies the closest player's hotbar and wears it as a body (only a picture: nothing is taken, used up or duplicated).
+	// Wiggles like a Pokey. Attacks: wiggle-charge, boomerang segments, segment rain, spin-dash, and every 15 seconds it
+	// picks a weapon off its copied hotbar and uses it on you. 10,000 HP, half the defense it used to have.
 	[AutoloadBossHead]
 	public class SlotBarCaterpillar : ModNPC
 	{
@@ -26,6 +27,7 @@ namespace BagofChaos.Content.NPCs.Bosses
 		public int Victim { get => (int)NPC.ai[3]; set => NPC.ai[3] = value; }
 
 		public override string Texture => "BagofChaos/Content/Projectiles/PongBall";
+		public override string BossHeadTexture => "BagofChaos/Content/NPCs/Bosses/SlotBarCaterpillar_Head_Boss";
 
 		public override void SetStaticDefaults() {
 			Main.npcFrameCount[Type] = 1;
@@ -38,7 +40,7 @@ namespace BagofChaos.Content.NPCs.Bosses
 			NPC.width = 44;
 			NPC.height = 44 * Segments;
 			NPC.damage = 50;
-			NPC.defense = 20;
+			NPC.defense = 10;
 			NPC.lifeMax = 10000;
 			NPC.HitSound = SoundID.NPCHit4;
 			NPC.DeathSound = SoundID.NPCDeath14;
@@ -61,20 +63,90 @@ namespace BagofChaos.Content.NPCs.Bosses
 			NPC.netUpdate = true;
 		}
 
-		public override void AI() {
-			// Steal the victim's bottom row (only that player's own client touches their inventory).
-			if (Victim == Main.myPlayer && !Main.player[Victim].dead) {
-				ChaosPlayer chaos = Main.LocalPlayer.GetModPlayer<ChaosPlayer>();
-				if (!chaos.RowStolen) {
-					chaos.RowStolen = true;
-					for (int i = 0; i < Segments; i++) {
-						chaos.StolenRow[i] = Main.LocalPlayer.inventory[40 + i].Clone();
-						Main.LocalPlayer.inventory[40 + i].TurnToAir();
-					}
-					Main.NewText(Terraria.Localization.Language.GetTextValue("Mods.BagofChaos.NPCs.SlotBarCaterpillar.Stolen"), Color.Orange);
+		/// <summary>The hotbar slot shown on segment i (segment 0 is the tail at the bottom, the head is hotbar slot 1).</summary>
+		public static int SlotForSegment(int segment) => Segments - 1 - segment;
+
+		/// <summary>The item the given segment is showing, or null for an empty slot (or no victim).</summary>
+		public Item SegmentItem(int segment) {
+			if (Victim < 0 || Victim >= Main.maxPlayers || !Main.player[Victim].active)
+				return null;
+			Item item = Main.player[Victim].inventory[SlotForSegment(segment)];
+			return item == null || item.IsAir ? null : item;
+		}
+
+		private static bool IsWeapon(Item item) => item != null && item.damage > 0 && !item.accessory && item.ammo == AmmoID.None && item.createTile < 0
+			&& item.createWall < 0 && !item.potion && (item.pick == 0 && item.axe == 0 && item.hammer == 0 || item.shoot > ProjectileID.None);
+
+		// Projectiles it can fire as its own: plain vanilla ones that don't need a player holding them and don't break tiles.
+		private static bool CanReplicate(Item item) {
+			int type = item.shoot;
+			if (type <= ProjectileID.None || type >= ProjectileID.Count || item.channel)
+				return false;
+			Projectile sample = ContentSamples.ProjectilesByType[type];
+			if (sample.minion || sample.sentry || Main.projPet[type] || ProjectileID.Sets.IsAWhip[type] || ProjectileID.Sets.Explosive[type] || sample.ownerHitCheck)
+				return false;
+			int ai = sample.aiStyle;
+			return ai != ProjAIStyleID.Hook && ai != ProjAIStyleID.Yoyo && ai != ProjAIStyleID.Flail && ai != ProjAIStyleID.Spear && ai != ProjAIStyleID.Drill
+				&& ai != ProjAIStyleID.HeldProjectile && ai != ProjAIStyleID.ShortSword && ai != ProjAIStyleID.Explosive;
+		}
+
+		private ref float WeaponTimer => ref NPC.localAI[0];
+		private int weaponSegment = -1;
+		private int weaponShots;
+
+		// Every 15 seconds: pick a random weapon from the copied hotbar and use it (a 3-shot burst). Skip if there are none.
+		private void UpdateCopiedWeapon(Player target) {
+			if (Main.netMode == NetmodeID.MultiplayerClient)
+				return;
+			if (weaponSegment < 0) {
+				if (++WeaponTimer < 60 * 15)
+					return;
+				WeaponTimer = 0;
+				var weapons = new System.Collections.Generic.List<int>();
+				for (int i = 0; i < Segments; i++) {
+					if (IsWeapon(SegmentItem(i)))
+						weapons.Add(i);
+				}
+				if (weapons.Count == 0)
+					return;
+				weaponSegment = weapons[Main.rand.Next(weapons.Count)];
+				weaponShots = 0;
+				return;
+			}
+			if (++WeaponTimer % 8 != 0)
+				return;
+			Item item = SegmentItem(weaponSegment);
+			if (!IsWeapon(item) || weaponShots >= 3) {
+				weaponSegment = -1;
+				WeaponTimer = 0;
+				return;
+			}
+			weaponShots++;
+			Vector2 from = SegmentCenter(weaponSegment);
+			int damage = Math.Clamp(item.damage, 20, 80);
+			if (CanReplicate(item)) {
+				Vector2 velocity = (target.Center - from).SafeNormalize(Vector2.UnitX) * Math.Max(8f, item.shootSpeed);
+				int index = Projectile.NewProjectile(NPC.GetSource_FromAI(), from, velocity, item.shoot, damage, item.knockBack, Main.myPlayer);
+				if (index >= 0 && index < Main.maxProjectiles) {
+					Projectile shot = Main.projectile[index];
+					shot.GetGlobalProjectile<Common.GlobalProjectiles.ChaosGlobalProjectile>().BossCopy = true;
+					shot.hostile = true;
+					shot.friendly = false;
+					shot.netUpdate = true;
 				}
 			}
+			else {
+				// Fallback (swords, summons, anything that can't be fired on its own): fling that segment at you.
+				Vector2 velocity = (target.Center - from).SafeNormalize(Vector2.UnitX) * 12f;
+				Projectile.NewProjectile(NPC.GetSource_FromAI(), from, velocity, ModContent.ProjectileType<SlotBoomerang>(), damage, 6f, Main.myPlayer, NPC.whoAmI, weaponSegment);
+			}
+			if (item.UseSound.HasValue)
+				SoundEngine.PlaySound(item.UseSound.Value, from);
+		}
 
+		private Vector2 SegmentCenter(int segment) => NPC.Bottom - new Vector2(0f, 44f * segment + 22f);
+
+		public override void AI() {
 			NPC.TargetClosest();
 			Player target = Main.player[NPC.target];
 			if (target.dead || !target.active) {
@@ -82,6 +154,11 @@ namespace BagofChaos.Content.NPCs.Bosses
 				if (NPC.timeLeft > 60) NPC.timeLeft = 60;
 				return;
 			}
+			if (Victim < 0 || Victim >= Main.maxPlayers || !Main.player[Victim].active || Main.player[Victim].dead) {
+				Victim = NPC.target; // copy whoever it's chasing now
+				NPC.netUpdate = true;
+			}
+			UpdateCopiedWeapon(target);
 
 			Timer++;
 			int attack = (int)AttackIndex % 4;
@@ -135,19 +212,26 @@ namespace BagofChaos.Content.NPCs.Bosses
 
 		public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
 			Texture2D back = TextureAssets.InventoryBack.Value;
-			Item[] row = Victim >= 0 && Victim < Main.maxPlayers ? Main.player[Victim].GetModPlayer<ChaosPlayer>().StolenRow : null;
+			Texture2D blob = TextureAssets.Npc[Type].Value;
 			float wiggle = (float)Math.Sin(Main.GameUpdateCount * 0.1f);
 			for (int i = 0; i < Segments; i++) {
 				float offsetX = (float)Math.Sin(Main.GameUpdateCount * 0.1f + i * 0.5f) * 10f * (i / (float)Segments) + wiggle * i;
 				Vector2 center = NPC.Bottom - screenPos + new Vector2(offsetX, -22f - i * 44f);
 				if (SpinAngle != 0f)
 					center = NPC.Center - screenPos + (center - (NPC.Center - screenPos)).RotatedBy(SpinAngle);
-				spriteBatch.Draw(back, center, null, drawColor, SpinAngle, back.Size() * 0.5f, 0.85f, SpriteEffects.None, 0f);
-				if (row != null && i < row.Length && !row[i].IsAir) {
-					Main.instance.LoadItem(row[i].type);
-					Texture2D icon = TextureAssets.Item[row[i].type].Value;
-					float scale = Math.Min(1f, 28f / Math.Max(icon.Width, icon.Height));
-					spriteBatch.Draw(icon, center, null, drawColor, SpinAngle, icon.Size() * 0.5f, scale, SpriteEffects.None, 0f);
+				Item item = SegmentItem(i);
+				bool firing = i == weaponSegment;
+				spriteBatch.Draw(back, center, null, firing ? Color.Lerp(drawColor, Color.OrangeRed, 0.6f) : drawColor, SpinAngle, back.Size() * 0.5f, 0.85f, SpriteEffects.None, 0f);
+				if (item != null) {
+					Main.instance.LoadItem(item.type);
+					Texture2D icon = TextureAssets.Item[item.type].Value;
+					Rectangle frame = Main.itemAnimations[item.type] != null ? Main.itemAnimations[item.type].GetFrame(icon) : icon.Frame();
+					float scale = Math.Min(1f, 28f / Math.Max(frame.Width, frame.Height));
+					spriteBatch.Draw(icon, center, frame, drawColor, SpinAngle, frame.Size() * 0.5f, scale, SpriteEffects.None, 0f);
+				}
+				else {
+					// Empty hotbar slot: a plain green caterpillar segment instead.
+					spriteBatch.Draw(blob, center, null, drawColor.MultiplyRGB(new Color(120, 200, 90)), SpinAngle, blob.Size() * 0.5f, 1.4f, SpriteEffects.None, 0f);
 				}
 			}
 			// Googly eyes on the top segment, obviously.
@@ -177,7 +261,7 @@ namespace BagofChaos.Content.NPCs.Bosses
 		}
 	}
 
-	// A stolen inventory slot thrown like a boomerang (ai[2] = 1: just falls).
+	// A copied hotbar slot thrown like a boomerang (ai[2] = 1: just falls). ai[1] = segment.
 	public class SlotBoomerang : ModProjectile
 	{
 		public override string Texture => "BagofChaos/Content/Projectiles/PongBall";
@@ -211,13 +295,14 @@ namespace BagofChaos.Content.NPCs.Bosses
 			Main.EntitySpriteDraw(back, Projectile.Center - Main.screenPosition, null, lightColor, Projectile.rotation, back.Size() * 0.5f, 0.85f, SpriteEffects.None, 0);
 			int owner = (int)Projectile.ai[0];
 			int segment = (int)Projectile.ai[1];
-			if (owner >= 0 && owner < Main.maxNPCs && Main.npc[owner].ModNPC is SlotBarCaterpillar boss && boss.Victim >= 0 && boss.Victim < Main.maxPlayers) {
-				Item[] row = Main.player[boss.Victim].GetModPlayer<ChaosPlayer>().StolenRow;
-				if (segment >= 0 && segment < row.Length && !row[segment].IsAir) {
-					Main.instance.LoadItem(row[segment].type);
-					Texture2D icon = TextureAssets.Item[row[segment].type].Value;
-					float scale = Math.Min(1f, 28f / Math.Max(icon.Width, icon.Height));
-					Main.EntitySpriteDraw(icon, Projectile.Center - Main.screenPosition, null, lightColor, Projectile.rotation, icon.Size() * 0.5f, scale, SpriteEffects.None, 0);
+			if (owner >= 0 && owner < Main.maxNPCs && Main.npc[owner].ModNPC is SlotBarCaterpillar boss) {
+				Item item = boss.SegmentItem(segment);
+				if (item != null) {
+					Main.instance.LoadItem(item.type);
+					Texture2D icon = TextureAssets.Item[item.type].Value;
+					Rectangle frame = Main.itemAnimations[item.type] != null ? Main.itemAnimations[item.type].GetFrame(icon) : icon.Frame();
+					float scale = Math.Min(1f, 28f / Math.Max(frame.Width, frame.Height));
+					Main.EntitySpriteDraw(icon, Projectile.Center - Main.screenPosition, frame, lightColor, Projectile.rotation, frame.Size() * 0.5f, scale, SpriteEffects.None, 0);
 				}
 			}
 			return false;

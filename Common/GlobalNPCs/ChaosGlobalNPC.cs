@@ -34,8 +34,40 @@ namespace BagofChaos.Common.GlobalNPCs
 		// --- delirium silhouette ---
 		public bool Silhouette;
 
-		// --- Snail Flail: 1 = snails, 2 = magma snails ---
+		// --- Nagel und Hammer: embedded nails (combo marker only) ---
+		public const int MaxNails = 15;
+		public const int NailDuration = 60 * 10;
+		public int NailStacks;
+		private int nailTimer;
+		private float[] nailAngles; // allocated per NPC on first nail (a field initializer would be shared by clones)
+
+		public void AddNails(int count, Vector2 fromVelocity) {
+			nailAngles ??= new float[MaxNails];
+			for (int i = 0; i < count && NailStacks < MaxNails; i++) {
+				nailAngles[NailStacks] = (-fromVelocity).ToRotation() + Main.rand.NextFloat(-0.6f, 0.6f);
+				NailStacks++;
+			}
+			nailTimer = NailDuration; // every nail refreshes the timer
+		}
+
+		public void ConsumeNails(int count) {
+			NailStacks = System.Math.Max(0, NailStacks - count);
+		}
+
+		// --- Remote NPC tools: an invisible, client-only stand-in that sits on the player so vanilla UI has someone to talk to ---
+		public bool RemoteGhost;
+
+		// --- Snail Flail: 1 = snails, 2 = magma snails. Only counts if the flail hit is the killing blow (same few frames). ---
 		public int SnailMark;
+		public uint SnailMarkTime;
+
+		public static readonly int[] SnailTypes = { NPCID.Snail, NPCID.GlowingSnail, NPCID.MagmaSnail, NPCID.SeaSnail };
+		public static bool IsSnail(NPC npc) => System.Array.IndexOf(SnailTypes, npc.type) >= 0;
+
+		public void MarkForSnails(int mark) {
+			SnailMark = mark;
+			SnailMarkTime = Main.GameUpdateCount;
+		}
 
 		// --- Gravity Flail slam ---
 		public bool Slamming;
@@ -71,6 +103,8 @@ namespace BagofChaos.Common.GlobalNPCs
 		// AI hooks
 		// ------------------------------------------------------------------------------------------------------------
 		public override bool PreAI(NPC npc) {
+			if (RemoteGhost)
+				return false;
 			// Night of Moon Shoes: everything is floaty.
 			if (ChaosEvents.MoonShoesActive)
 				npc.GravityMultiplier *= 0.5f;
@@ -79,6 +113,10 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override void PostAI(NPC npc) {
+			if (RemoteGhost)
+				return;
+			if (NailStacks > 0 && --nailTimer <= 0)
+				NailStacks = 0;
 			UpdateGlue(npc);
 			UpdateSlam(npc);
 
@@ -195,7 +233,8 @@ namespace BagofChaos.Common.GlobalNPCs
 
 		// Snail Flail / Loot Scanner / Doppleganger-free loot rules.
 		public override bool PreKill(NPC npc) {
-			if (SnailMark > 0 && Main.netMode != NetmodeID.MultiplayerClient) {
+			bool killingBlow = SnailMark > 0 && Main.GameUpdateCount - SnailMarkTime <= 3;
+			if (killingBlow && !IsSnail(npc) && Main.netMode != NetmodeID.MultiplayerClient) {
 				int snail = SnailMark == 2 ? NPCID.MagmaSnail : NPCID.Snail;
 				int count = Main.rand.Next(1, 4);
 				for (int i = 0; i < count; i++)
@@ -227,6 +266,8 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override bool CanHitPlayer(NPC npc, Player target, ref int cooldownSlot) {
+			if (RemoteGhost)
+				return false;
 			if (ChaosEvents.JellyStormActive)
 				return false;
 			if (target.GetModPlayer<ChaosPlayer>().Stalemate)
@@ -310,7 +351,9 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		// Stalemate: enemies can't hurt you, you can't hurt them.
-		public override bool? CanBeHitByItem(NPC npc, Player player, Item item) => player.GetModPlayer<ChaosPlayer>().Stalemate ? false : null;
+		public override bool? CanBeHitByItem(NPC npc, Player player, Item item) => RemoteGhost || player.GetModPlayer<ChaosPlayer>().Stalemate ? false : null;
+
+		public override bool? CanBeHitByProjectile(NPC npc, Projectile projectile) => RemoteGhost ? false : null;
 
 		public override void ModifyNPCLoot(NPC npc, NPCLoot npcLoot) {
 			if (npc.type == NPCID.Guide)
@@ -332,6 +375,8 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override bool PreDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			if (RemoteGhost)
+				return false;
 			if (npc.HasBuff<GlueDebuff>())
 				ChaosUtils.DrawOutline(npc, spriteBatch, screenPos, Color.White);
 			if (!Slashed && !Stretched && !Tall)
@@ -370,6 +415,10 @@ namespace BagofChaos.Common.GlobalNPCs
 		}
 
 		public override void PostDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			if (RemoteGhost)
+				return;
+			if (NailStacks > 0)
+				DrawNails(npc, spriteBatch, screenPos, drawColor);
 			if (Main.LocalPlayer.HasBuff<Weedy>())
 				DrawReflection(npc, spriteBatch, screenPos, drawColor);
 			if (!Googly)
@@ -413,6 +462,19 @@ namespace BagofChaos.Common.GlobalNPCs
 				pupilA = Vector2.Normalize(pupilA) * Limit;
 			if (pupilB.Length() > Limit)
 				pupilB = Vector2.Normalize(pupilB) * Limit;
+		}
+	
+		// Embedded nails: drawn sticking out of the enemy, pointing back the way they came in.
+		private void DrawNails(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor) {
+			Main.instance.LoadProjectile(ProjectileID.NailFriendly);
+			Texture2D nail = Terraria.GameContent.TextureAssets.Projectile[ProjectileID.NailFriendly].Value;
+			Vector2 center = npc.Center - screenPos + new Vector2(0f, npc.gfxOffY);
+			float rx = npc.width * 0.45f, ry = npc.height * 0.45f;
+			for (int i = 0; i < NailStacks && nailAngles != null; i++) {
+				float angle = nailAngles[i];
+				Vector2 at = center + new Vector2((float)System.Math.Cos(angle) * rx, (float)System.Math.Sin(angle) * ry);
+				spriteBatch.Draw(nail, at, null, drawColor, angle - MathHelper.PiOver2, new Vector2(nail.Width / 2f, nail.Height), 0.8f, SpriteEffects.None, 0f);
+			}
 		}
 	}
 }

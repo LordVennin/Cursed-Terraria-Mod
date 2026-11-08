@@ -88,20 +88,6 @@ namespace BagofChaos.Content.Buffs
 		}
 	}
 
-	// Harpy wings mount buff.
-	public class HarpyMountBuff : ModBuff
-	{
-		public override void SetStaticDefaults() {
-			Main.buffNoTimeDisplay[Type] = true;
-			Main.buffNoSave[Type] = true;
-		}
-
-		public override void Update(Player player, ref int buffIndex) {
-			player.mount.SetMount(ModContent.MountType<Mounts.HarpyWingsMount>(), player);
-			player.buffTime[buffIndex] = 10;
-		}
-	}
-
 	public class RatCartBuff : ModBuff
 	{
 		public override void SetStaticDefaults() {
@@ -126,6 +112,24 @@ namespace BagofChaos.Content.Buffs
 			player.mount.SetMount(ModContent.MountType<Mounts.SharkboardMount>(), player);
 			player.buffTime[buffIndex] = 10;
 			player.gills = true;
+		}
+	}
+
+	// Rubber Banding Bandit Warpaint: the projectile magnet is recharging.
+	public class WarpaintCooldown : ModBuff
+	{
+		public override void SetStaticDefaults() {
+			Main.debuff[Type] = true;
+			Main.buffNoSave[Type] = true;
+			BuffID.Sets.NurseCannotRemoveDebuff[Type] = true;
+		}
+	}
+
+	// Rubber Banding Bandit Warpaint: the projectile magnet is on.
+	public class WarpaintMagnetBuff : ModBuff
+	{
+		public override void SetStaticDefaults() {
+			Main.buffNoSave[Type] = true;
 		}
 	}
 }

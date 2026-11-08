@@ -15,7 +15,7 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Projectiles
 {
-	// ---- Nail and Hammer ----
+	// ---- Nagel und Hammer: thrown nails embed in enemies and add Nails stacks ----
 	public class ThrownNail : ModProjectile
 	{
 		public override string Texture => "Terraria/Images/Projectile_" + ProjectileID.NailFriendly;
@@ -36,7 +36,87 @@ namespace BagofChaos.Content.Projectiles
 		}
 
 		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
-			target.AddBuff(ModContent.BuffType<Nails>(), 60 * 15);
+			target.GetGlobalNPC<ChaosGlobalNPC>().AddNails(1, Projectile.velocity);
+			target.AddBuff(ModContent.BuffType<Nails>(), ChaosGlobalNPC.NailDuration); // the visible timer; refreshed per nail
+		}
+	}
+
+	// Geschmolzener nails: slower, bigger, red-hot. Burn and still build Nails stacks.
+	public class MoltenNail : ThrownNail
+	{
+		public override void SetDefaults() {
+			base.SetDefaults();
+			Projectile.scale = 1.4f;
+			Projectile.width = 11;
+			Projectile.height = 11;
+		}
+
+		public override void AI() {
+			base.AI();
+			Lighting.AddLight(Projectile.Center, 0.6f, 0.25f, 0.05f);
+			if (Main.rand.NextBool(3))
+				Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, DustID.Torch).noGravity = true;
+		}
+
+		public override Color? GetAlpha(Color lightColor) => new Color(255, 110, 60, 220);
+
+		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
+			base.OnHitNPC(target, hit, damageDone);
+			target.AddBuff(BuffID.OnFire3, 60 * 4);
+		}
+	}
+
+	// The oversized Molten Hamaxe boomerang. Pulls all the nails out of whatever it hits: one explosion, fixed damage.
+	public class MoltenHammerProjectile : ModProjectile
+	{
+		public override string Texture => "Terraria/Images/Item_" + ItemID.MoltenHamaxe;
+
+		public override void SetDefaults() {
+			Projectile.width = 50;
+			Projectile.height = 50;
+			Projectile.scale = 2f;
+			Projectile.friendly = true;
+			Projectile.DamageType = DamageClass.Melee;
+			Projectile.penetrate = -1;
+			Projectile.aiStyle = ProjAIStyleID.Boomerang;
+			AIType = ProjectileID.WoodenBoomerang;
+			Projectile.usesLocalNPCImmunity = true;
+			Projectile.localNPCHitCooldown = 15;
+		}
+
+		public override void PostAI() {
+			Lighting.AddLight(Projectile.Center, 0.8f, 0.35f, 0.1f);
+			if (Main.rand.NextBool(2))
+				Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, DustID.Torch, 0f, 0f, 0, default, 1.4f).noGravity = true;
+		}
+
+		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
+			target.AddBuff(BuffID.OnFire3, 60 * 5);
+			ChaosGlobalNPC global = target.GetGlobalNPC<ChaosGlobalNPC>();
+			if (global.NailStacks > 0 && Projectile.owner == Main.myPlayer) {
+				global.ConsumeNails(global.NailStacks);
+				Projectile.NewProjectile(Projectile.GetSource_FromThis(), target.Center, Vector2.Zero, ModContent.ProjectileType<NailExplosion>(),
+					Items.Weapons.MoltenNailAndHammer.ExplosionDamage, 6f, Projectile.owner);
+			}
+		}
+
+		public override bool PreDraw(ref Color lightColor) {
+			Main.instance.LoadItem(ItemID.MoltenHamaxe);
+			Texture2D texture = TextureAssets.Item[ItemID.MoltenHamaxe].Value;
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, null, Color.Lerp(lightColor, Color.White, 0.5f), Projectile.rotation, texture.Size() * 0.5f, Projectile.scale, SpriteEffects.None, 0);
+			return false;
+		}
+	}
+
+	public class NailExplosion : InstantExplosion
+	{
+		protected override int Size => 120;
+		protected override int DustType => DustID.Torch;
+		public override string Texture => "BagofChaos/Content/Projectiles/CanExplosion";
+
+		public override void SetDefaults() {
+			base.SetDefaults();
+			Projectile.DamageType = DamageClass.Melee;
 		}
 	}
 
@@ -78,9 +158,14 @@ namespace BagofChaos.Content.Projectiles
 			return false;
 		}
 
+		// Snails are immune to snail flails. Both kinds, all snails. No snail recursion.
+		public override bool? CanHitNPC(NPC target) => ChaosGlobalNPC.IsSnail(target) ? false : null;
+
 		public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers) {
-			// Mark the target so a killing blow replaces its loot with snails.
-			target.GetGlobalNPC<ChaosGlobalNPC>().SnailMark = Hot ? 2 : 1;
+			// Mark the target so a killing blow replaces its loot with snails. The server decides loot, so tell it too
+			// (this packet goes out before the hit itself, so it arrives first).
+			target.GetGlobalNPC<ChaosGlobalNPC>().MarkForSnails(Hot ? 2 : 1);
+			BagofChaos.SendSnailMark(target, Hot ? 2 : 1);
 		}
 
 		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
@@ -96,11 +181,45 @@ namespace BagofChaos.Content.Projectiles
 
 		public override void SetDefaults() {
 			Projectile.CloneDefaults(ProjectileID.LightDisc);
-			AIType = ProjectileID.LightDisc;
+			// Own out-and-back flight: vanilla boomerang AI turns around on every enemy hit, these fly straight through.
+			Projectile.aiStyle = -1;
+			AIType = 0;
 			Projectile.penetrate = -1;
 			Projectile.usesLocalNPCImmunity = true;
 			Projectile.localNPCHitCooldown = 1; // ignores i-frames
 			Projectile.ArmorPenetration = 10000; // ignores defense
+		}
+
+		private bool Returning { get => Projectile.ai[0] == 1f; set => Projectile.ai[0] = value ? 1f : 0f; }
+
+		public override void AI() {
+			Player owner = Main.player[Projectile.owner];
+			Projectile.rotation += 0.4f * (Projectile.velocity.X < 0f ? -1f : 1f);
+			Lighting.AddLight(Projectile.Center, Main.DiscoColor.ToVector3() * 0.4f);
+			if (!Returning) {
+				if (++Projectile.ai[1] >= 35f) {
+					Returning = true;
+					Projectile.netUpdate = true;
+				}
+				return;
+			}
+			Projectile.tileCollide = false;
+			Vector2 toOwner = owner.Center - Projectile.Center;
+			if (toOwner.Length() < 24f || owner.dead || !owner.active) {
+				if (Projectile.owner == Main.myPlayer)
+					Projectile.Kill();
+				return;
+			}
+			Projectile.velocity = Vector2.Lerp(Projectile.velocity, toOwner.SafeNormalize(Vector2.Zero) * 16f, 0.12f);
+		}
+
+		public override bool OnTileCollide(Vector2 oldVelocity) {
+			// Walls still send it home, like a normal light disc.
+			Projectile.velocity = -oldVelocity;
+			Returning = true;
+			Projectile.netUpdate = true;
+			SoundEngine.PlaySound(SoundID.Dig, Projectile.Center);
+			return false;
 		}
 
 		public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers) {
@@ -134,8 +253,8 @@ namespace BagofChaos.Content.Projectiles
 		}
 
 		public override bool PreDraw(ref Color lightColor) {
-			Texture2D texture = Hardmode ? TextureAssets.Item[ItemID.AcornAxe].Value : TextureAssets.Item[ItemID.CopperAxe].Value;
 			Main.instance.LoadItem(Hardmode ? ItemID.AcornAxe : ItemID.CopperAxe);
+			Texture2D texture = Hardmode ? TextureAssets.Item[ItemID.AcornAxe].Value : TextureAssets.Item[ItemID.CopperAxe].Value;
 			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, null, lightColor, Projectile.rotation, texture.Size() * 0.5f, 1f, SpriteEffects.None, 0);
 			return false;
 		}
@@ -144,7 +263,8 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.rotation += 0.4f * Projectile.direction;
 			if (Projectile.owner != Main.myPlayer)
 				return;
-			// Chop trees we pass through.
+			// Any tree the axe touches comes down in one hit: find the bottom of the trunk and cut it there.
+			// (No axe power involved; this is the projectile doing it.)
 			Rectangle box = Projectile.Hitbox;
 			for (int x = box.Left / 16; x <= box.Right / 16; x++) {
 				for (int y = box.Top / 16; y <= box.Bottom / 16; y++) {
@@ -153,12 +273,13 @@ namespace BagofChaos.Content.Projectiles
 					Tile tile = Main.tile[x, y];
 					if (!tile.HasTile || !TileID.Sets.IsATreeTrunk[tile.TileType])
 						continue;
-					if (Hardmode || Main.rand.NextBool(8)) {
-						WorldGen.KillTile(x, y);
-						if (Main.netMode == NetmodeID.MultiplayerClient)
-							NetMessage.SendData(MessageID.TileManipulation, number: 0, number2: x, number3: y);
-						SoundEngine.PlaySound(SoundID.Dig, Projectile.Center);
-					}
+					int baseY = y;
+					while (baseY + 1 < Main.maxTilesY - 5 && Main.tile[x, baseY + 1].HasTile && TileID.Sets.IsATreeTrunk[Main.tile[x, baseY + 1].TileType])
+						baseY++;
+					WorldGen.KillTile(x, baseY);
+					if (Main.netMode == NetmodeID.MultiplayerClient)
+						NetMessage.SendData(MessageID.TileManipulation, number: 0, number2: x, number3: baseY);
+					SoundEngine.PlaySound(SoundID.Item37, Projectile.Center);
 				}
 			}
 		}
@@ -169,10 +290,12 @@ namespace BagofChaos.Content.Projectiles
 		}
 	}
 
-	// ---- Rat Tacks: lie on the ground for 40 seconds, bite whatever steps on them ----
+	// ---- Rat Tacks: a single rat trap. Sits still on the floor; 3 successful bites or 30 seconds, whichever comes first. ----
+	// ai[0] = successful hits so far. Damage type and damage follow the owner's current Rat Tacks mode every frame.
 	public class RatTack : ModProjectile
 	{
-		public override string Texture => "BagofChaos/Content/Projectiles/RatBullet";
+		public const int MaxHits = 3;
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Mouse;
 
 		public override void SetDefaults() {
 			Projectile.width = 14;
@@ -180,32 +303,50 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.friendly = true;
 			Projectile.DamageType = DamageClass.Melee;
 			Projectile.penetrate = -1;
-			Projectile.timeLeft = 60 * 40;
+			Projectile.timeLeft = 60 * 30;
 			Projectile.aiStyle = -1;
 			Projectile.usesLocalNPCImmunity = true;
 			Projectile.localNPCHitCooldown = 30;
 		}
 
-		public override void OnSpawn(IEntitySource source) {
-			Projectile.DamageType = Main.player[Projectile.owner].GetModPlayer<ChaosPlayer>().RatTacksSummon ? DamageClass.Summon : DamageClass.Melee;
-		}
-
 		public override void AI() {
-			Projectile.velocity.Y += 0.3f;
-			Projectile.velocity.X *= 0.98f;
-			Projectile.spriteDirection = Projectile.velocity.X < 0 ? -1 : 1;
-			if (Projectile.velocity.Y == 0f && Main.rand.NextBool(90))
-				Projectile.velocity.X = Main.rand.NextFloat(-1.5f, 1.5f); // fidget
+			Player owner = Main.player[Projectile.owner];
+			// Mode switches apply to rats already on the ground, without touching their timers or hit counts.
+			Projectile.DamageType = Items.Weapons.RatTacks.ModeClass(owner);
+			Projectile.damage = (int)owner.GetTotalDamage(Projectile.DamageType).ApplyTo(Items.Weapons.RatTacks.ModeDamage(owner));
+			Projectile.velocity.Y = System.Math.Min(Projectile.velocity.Y + 0.3f, 12f);
+			if (Projectile.velocity.Y == 0f)
+				Projectile.velocity.X = 0f; // landed: it's a trap now
+			else
+				Projectile.spriteDirection = Projectile.velocity.X < 0 ? -1 : 1;
 		}
 
 		public override bool OnTileCollide(Vector2 oldVelocity) {
-			if (oldVelocity.Y > 1f)
-				Projectile.velocity.Y = 0f;
+			if (oldVelocity.Y > 0f) {
+				Projectile.velocity = Vector2.Zero;
+			}
+			else if (Projectile.velocity.X != oldVelocity.X) {
+				Projectile.velocity.X = 0f;
+			}
 			return false;
 		}
 
 		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
 			SoundEngine.PlaySound(new SoundStyle($"{BagofChaos.AssetPath}Sounds/Squeak") { Volume = 0.5f, PitchVariance = 0.4f }, Projectile.Center);
+			if (++Projectile.ai[0] >= MaxHits)
+				Projectile.Kill();
+			else
+				Projectile.netUpdate = true;
+		}
+
+		public override bool PreDraw(ref Color lightColor) {
+			Main.instance.LoadNPC(NPCID.Mouse);
+			Texture2D texture = TextureAssets.Npc[NPCID.Mouse].Value;
+			Rectangle frame = texture.Frame(1, Main.npcFrameCount[NPCID.Mouse], 0, 0);
+			SpriteEffects effects = Projectile.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+			Vector2 position = Projectile.Bottom - Main.screenPosition + new Vector2(0f, Projectile.gfxOffY + 2f);
+			Main.EntitySpriteDraw(texture, position, frame, lightColor, 0f, new Vector2(frame.Width / 2f, frame.Height), 1f, effects, 0);
+			return false;
 		}
 	}
 
@@ -384,9 +525,11 @@ namespace BagofChaos.Content.Projectiles
 		}
 	}
 
-	// ---- Stacks of Fish minion ----
+	// ---- Stacks of Fish: a tower of goldfish on your head. Each fish shoots goldfish on its own range and cooldown. ----
+	// ai[0] = this fish's attack cooldown. The tower never breaks: fish stay put and fire separate projectiles.
 	public class FishStackMinion : ModProjectile
 	{
+		public const float AttackRange = 520f;
 		public override string Texture => "Terraria/Images/NPC_" + NPCID.Goldfish;
 
 		public override void SetStaticDefaults() {
@@ -394,23 +537,22 @@ namespace BagofChaos.Content.Projectiles
 			Main.projPet[Type] = true;
 			ProjectileID.Sets.MinionSacrificable[Type] = true;
 			ProjectileID.Sets.CultistIsResistantTo[Type] = true;
+			ProjectileID.Sets.MinionTargettingFeature[Type] = true;
 		}
 
 		public override void SetDefaults() {
 			Projectile.width = 24;
 			Projectile.height = 16;
 			Projectile.tileCollide = false;
-			Projectile.friendly = true;
+			Projectile.friendly = false; // it shoots; it doesn't flop at things
 			Projectile.minion = true;
 			Projectile.DamageType = DamageClass.Summon;
-			Projectile.minionSlots = 1f / 3f;
+			Projectile.minionSlots = 1f;
 			Projectile.penetrate = -1;
-			Projectile.usesLocalNPCImmunity = true;
-			Projectile.localNPCHitCooldown = 20;
 		}
 
 		public override bool? CanCutTiles() => false;
-		public override bool MinionContactDamage() => true;
+		public override bool MinionContactDamage() => false;
 
 		public override void AI() {
 			Player owner = Main.player[Projectile.owner];
@@ -421,41 +563,97 @@ namespace BagofChaos.Content.Projectiles
 			if (owner.HasBuff<FishStackBuff>())
 				Projectile.timeLeft = 2;
 
-			// Find our place in the stack.
+			// Our floor in the tower: one fish above the other, starting on top of the player's head.
 			int index = 0;
 			foreach (Projectile other in Main.ActiveProjectiles) {
 				if (other.type == Type && other.owner == Projectile.owner && other.whoAmI < Projectile.whoAmI)
 					index++;
 			}
-			Vector2 idle = owner.Top + new Vector2(0f, -10f - index * 14f);
-			Projectile.spriteDirection = owner.direction;
+			Vector2 seat = owner.Top + new Vector2(owner.direction * -2f, -8f - index * 14f + owner.gfxOffY);
+			Projectile.Center = seat;
+			Projectile.velocity = Vector2.Zero;
+			Projectile.rotation = (float)System.Math.Sin((Main.GameUpdateCount + index * 13) * 0.08f) * 0.12f; // a little wobble
 
-			// Attack nearby enemies by flopping at them, then go back to the stack.
+			// Targeting: a whip-marked enemy in range wins, otherwise the closest valid enemy in this fish's own range.
 			NPC target = null;
-			float best = 400f;
-			foreach (NPC npc in Main.ActiveNPCs) {
-				if (!npc.CanBeChasedBy())
-					continue;
-				float d = Vector2.Distance(npc.Center, owner.Center);
-				if (d < best) { best = d; target = npc; }
+			if (owner.HasMinionAttackTargetNPC) {
+				NPC marked = Main.npc[owner.MinionAttackTargetNPC];
+				if (marked.CanBeChasedBy(Projectile) && Vector2.Distance(marked.Center, Projectile.Center) <= AttackRange)
+					target = marked;
 			}
-			if (target != null && Projectile.ai[0] > 0f) {
-				Projectile.velocity = (Projectile.velocity * 9f + (target.Center - Projectile.Center).SafeNormalize(Vector2.Zero) * 10f) / 10f;
-				Projectile.friendly = true;
-				if (++Projectile.ai[1] > 60) { Projectile.ai[1] = 0; Projectile.ai[0] = 0f; }
+			if (target == null) {
+				float best = AttackRange;
+				foreach (NPC npc in Main.ActiveNPCs) {
+					if (!npc.CanBeChasedBy(Projectile))
+						continue;
+					float d = Vector2.Distance(npc.Center, Projectile.Center);
+					if (d < best && Collision.CanHitLine(Projectile.Center, 1, 1, npc.Center, 1, 1)) { best = d; target = npc; }
+				}
 			}
-			else {
-				Projectile.Center = Vector2.Lerp(Projectile.Center, idle, 0.4f);
-				Projectile.velocity = Vector2.Zero;
-				Projectile.friendly = false;
-				if (target != null && Main.rand.NextBool(90 + index * 20))
-					Projectile.ai[0] = 1f;
+			Projectile.spriteDirection = target != null ? (target.Center.X > Projectile.Center.X ? 1 : -1) : owner.direction;
+
+			if (Projectile.ai[0] > 0f)
+				Projectile.ai[0]--;
+			if (target != null && Projectile.ai[0] <= 0f && Projectile.owner == Main.myPlayer) {
+				Vector2 velocity = (target.Center - Projectile.Center).SafeNormalize(Vector2.UnitX) * 11f;
+				Projectile.NewProjectile(Projectile.GetSource_FromThis(), Projectile.Center, velocity, ModContent.ProjectileType<GoldfishShot>(), Projectile.damage, Projectile.knockBack, Projectile.owner);
+				Projectile.ai[0] = 50 + Main.rand.Next(20); // each fish keeps its own rhythm
+				Projectile.netUpdate = true;
 			}
-			Projectile.rotation = Projectile.velocity.X * 0.1f;
+		}
+
+		public override bool PreDraw(ref Color lightColor) {
+			Main.instance.LoadNPC(NPCID.Goldfish);
+			Texture2D texture = TextureAssets.Npc[NPCID.Goldfish].Value;
+			int frames = Main.npcFrameCount[NPCID.Goldfish];
+			Rectangle frame = texture.Frame(1, frames, 0, (int)(Main.GameUpdateCount / 8 % frames));
+			SpriteEffects effects = Projectile.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, frame, lightColor, Projectile.rotation, frame.Size() * 0.5f, 1f, effects, 0);
+			return false;
+		}
+	}
+
+	// A goldfish, fired from the tower. Flops through the air and splats.
+	public class GoldfishShot : ModProjectile
+	{
+		public override string Texture => "Terraria/Images/NPC_" + NPCID.Goldfish;
+
+		public override void SetStaticDefaults() {
+			ProjectileID.Sets.MinionShot[Type] = true;
+		}
+
+		public override void SetDefaults() {
+			Projectile.width = 14;
+			Projectile.height = 14;
+			Projectile.friendly = true;
+			Projectile.DamageType = DamageClass.Summon;
+			Projectile.penetrate = 1;
+			Projectile.timeLeft = 120;
+			Projectile.aiStyle = -1;
+		}
+
+		public override void AI() {
+			Projectile.velocity.Y += 0.12f;
+			Projectile.rotation += 0.3f * (Projectile.velocity.X < 0f ? -1f : 1f);
+		}
+
+		public override void OnKill(int timeLeft) {
+			for (int i = 0; i < 5; i++)
+				Dust.NewDust(Projectile.position, Projectile.width, Projectile.height, DustID.Water);
+			SoundEngine.PlaySound(SoundID.NPCDeath1 with { Volume = 0.3f, Pitch = 0.5f }, Projectile.Center);
+		}
+
+		public override bool PreDraw(ref Color lightColor) {
+			Main.instance.LoadNPC(NPCID.Goldfish);
+			Texture2D texture = TextureAssets.Npc[NPCID.Goldfish].Value;
+			Rectangle frame = texture.Frame(1, Main.npcFrameCount[NPCID.Goldfish], 0, 0);
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, frame, lightColor, Projectile.rotation, frame.Size() * 0.5f, 0.8f, SpriteEffects.None, 0);
+			return false;
 		}
 	}
 
 	// ---- Mega fart explosion (Fart Reverb.mp4): hits everything, blows up blocks ----
+	// ai[0] = block radius in tiles. Every client sizes it and checks its own player, so other players get hit too.
 	public class MegaFartExplosion : ModProjectile
 	{
 		public override string Texture => "BagofChaos/Content/Projectiles/RocketPackExplosion";
@@ -464,7 +662,6 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.width = 100;
 			Projectile.height = 100;
 			Projectile.friendly = true;
-			Projectile.hostile = true;
 			Projectile.penetrate = -1;
 			Projectile.tileCollide = false;
 			Projectile.timeLeft = 4;
@@ -473,25 +670,27 @@ namespace BagofChaos.Content.Projectiles
 			Projectile.localNPCHitCooldown = 60;
 		}
 
-		public override void OnSpawn(IEntitySource source) {
+		private float Radius => Math.Max(100, (int)Projectile.ai[0] * 32) / 2f;
+
+		public override void AI() {
+			if (Projectile.localAI[0] != 0f)
+				return;
+			Projectile.localAI[0] = 1f;
 			int radiusTiles = (int)Projectile.ai[0];
-			int size = Math.Max(100, radiusTiles * 32);
+			int size = (int)(Radius * 2f);
 			Projectile.Resize(size, size);
+
+			// Everyone takes it. Including you. Including the Guide. Each client handles its own player.
+			Player local = Main.LocalPlayer;
+			if (Main.netMode != NetmodeID.Server && local.active && !local.dead && Vector2.Distance(local.Center, Projectile.Center) < Radius)
+				local.Hurt(PlayerDeathReason.ByCustomReason(Terraria.Localization.NetworkText.FromKey("Mods.BagofChaos.DeathMessages.FartMp4", local.name)), Projectile.damage, 0);
+
 			if (Projectile.owner != Main.myPlayer)
 				return;
-			Player owner = Main.player[Projectile.owner];
-			// Everyone takes it. Including you. Including the Guide.
-			foreach (Player player in Main.ActivePlayers) {
-				if (!player.dead && Vector2.Distance(player.Center, Projectile.Center) < size / 2f) {
-					if (player.whoAmI == Main.myPlayer)
-						player.Hurt(PlayerDeathReason.ByCustomReason(Terraria.Localization.NetworkText.FromKey("Mods.BagofChaos.DeathMessages.FartMp4", player.name)), Projectile.damage, 0);
-				}
-			}
 			foreach (NPC npc in Main.ActiveNPCs) {
-				if ((npc.townNPC || npc.friendly) && Vector2.Distance(npc.Center, Projectile.Center) < size / 2f)
+				if ((npc.townNPC || npc.friendly) && !npc.dontTakeDamage && Vector2.Distance(npc.Center, Projectile.Center) < Radius)
 					npc.SimpleStrikeNPC(Projectile.damage, 0, noPlayerInteraction: true);
 			}
-			// Blow up blocks.
 			if (radiusTiles > 0) {
 				Point center = Projectile.Center.ToTileCoordinates();
 				for (int x = center.X - radiusTiles; x <= center.X + radiusTiles; x++) {
@@ -512,7 +711,14 @@ namespace BagofChaos.Content.Projectiles
 				Main.instance.CameraModifiers.Add(new Terraria.Graphics.CameraModifiers.PunchCameraModifier(Projectile.Center, Main.rand.NextVector2Unit(), 20f, 8f, 40, 3000f, "FartMp4"));
 		}
 
-		public override bool CanHitPlayer(Player target) => false; // handled manually so the owner is included
+		// Enemies are hit by normal (circular-ish) collision; players and friendly NPCs are handled above.
+		public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox) {
+			Vector2 closest = Vector2.Clamp(Projectile.Center, targetHitbox.TopLeft(), targetHitbox.BottomRight());
+			return Vector2.Distance(closest, Projectile.Center) < Radius;
+		}
+
+		public override bool CanHitPlayer(Player target) => false;
+		public override bool CanHitPvp(Player target) => false;
 	}
 
 	// ---- Woops! All Arrows! ----
@@ -597,57 +803,74 @@ namespace BagofChaos.Content.Projectiles
 		}
 	}
 
-	// ---- Slotting Pillar: a flying inventory slot that boomerangs back ----
+	// ---- Slotting Pillar: a random backpack slot launches itself the way you're aiming, then flies back into its slot ----
+	// ai[1] = slot index + 1 (never the hotbar). It only *shows* the item; nothing is taken out of your inventory.
 	public class SlotProjectile : ModProjectile
 	{
 		public override string Texture => "BagofChaos/Content/Projectiles/PongBall";
-		private int slot = -1;
+		private int Slot => (int)Projectile.ai[1] - 1;
+		private bool Returning { get => Projectile.ai[0] == 1f; set => Projectile.ai[0] = value ? 1f : 0f; }
 
 		public override void SetDefaults() {
 			Projectile.width = 30;
 			Projectile.height = 30;
 			Projectile.friendly = true;
 			Projectile.DamageType = DamageClass.Ranged;
-			Projectile.penetrate = 1;
-			Projectile.timeLeft = 240;
+			Projectile.penetrate = -1;
+			Projectile.timeLeft = 600;
 			Projectile.aiStyle = -1;
 			Projectile.tileCollide = true;
+			Projectile.usesLocalNPCImmunity = true;
+			Projectile.localNPCHitCooldown = -1;
+		}
+
+		public override void OnSpawn(IEntitySource source) {
+			if (Projectile.owner != Main.myPlayer)
+				return;
+			Projectile.ai[1] = Main.rand.Next(10, 50) + 1;
+			Projectile.Center = SlotMinion.SlotWorldPosition(Slot);
+			Projectile.netUpdate = true;
 		}
 
 		public override void AI() {
-			if (slot < 0)
-				slot = Main.rand.Next(10, 50); // never a hotbar slot
-			Projectile.rotation += 0.1f;
-			if (Projectile.ai[0] == 1f) {
-				// returning
-				Player owner = Main.player[Projectile.owner];
-				Vector2 to = owner.Center - Projectile.Center;
-				if (to.Length() < 30f) { Projectile.Kill(); return; }
-				Projectile.velocity = to.SafeNormalize(Vector2.Zero) * 16f;
+			Projectile.rotation += 0.15f;
+			if (Projectile.owner != Main.myPlayer)
+				return; // the slot's position only makes sense on its owner's screen
+			if (Returning) {
+				Vector2 home = SlotMinion.SlotWorldPosition(Slot);
+				Vector2 to = home - Projectile.Center;
+				Projectile.friendly = false;
 				Projectile.tileCollide = false;
+				if (to.Length() < 24f) {
+					Projectile.Kill();
+					return;
+				}
+				Projectile.velocity = to.SafeNormalize(Vector2.Zero) * Math.Max(18f, Projectile.velocity.Length());
 			}
-			else if (!Common.ChaosUtils.OnScreen(Projectile)) {
-				Projectile.ai[0] = 1f;
+			else if (!Common.ChaosUtils.OnScreen(Projectile) && Projectile.timeLeft < 590) {
+				Returning = true;
+				Projectile.netUpdate = true;
 			}
 		}
 
-		public override bool OnTileCollide(Vector2 oldVelocity) { Projectile.ai[0] = 1f; return false; }
-		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) { Projectile.ai[0] = 1f; Projectile.penetrate = -1; }
+		public override bool OnTileCollide(Vector2 oldVelocity) {
+			Returning = true;
+			Projectile.netUpdate = true;
+			return false;
+		}
+
+		public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone) {
+			Returning = true;
+			Projectile.netUpdate = true;
+		}
 
 		public override bool PreDraw(ref Color lightColor) {
-			Texture2D back = TextureAssets.InventoryBack.Value;
-			Main.EntitySpriteDraw(back, Projectile.Center - Main.screenPosition, null, Color.White, Projectile.rotation, back.Size() * 0.5f, 0.6f, SpriteEffects.None, 0);
-			Player owner = Main.player[Projectile.owner];
-			if (slot >= 0 && slot < owner.inventory.Length && !owner.inventory[slot].IsAir) {
-				Main.instance.LoadItem(owner.inventory[slot].type);
-				Texture2D icon = TextureAssets.Item[owner.inventory[slot].type].Value;
-				Main.EntitySpriteDraw(icon, Projectile.Center - Main.screenPosition, null, Color.White, Projectile.rotation, icon.Size() * 0.5f, 0.6f, SpriteEffects.None, 0);
-			}
+			SlotMinion.DrawSlot(Projectile, Slot, Projectile.rotation);
 			return false;
 		}
 	}
 
-	// ---- Slotter Pillar: inventory slots as minions (only while the inventory is open) ----
+	// ---- Slotter Pillar: inventory slots as minions. They live where their slot is on screen, inventory open or not. ----
 	public class SlotMinion : ModProjectile
 	{
 		public override string Texture => "BagofChaos/Content/Projectiles/PongBall";
@@ -674,14 +897,30 @@ namespace BagofChaos.Content.Projectiles
 
 		public override bool MinionContactDamage() => true;
 
-		private Vector2 HomeWorldPosition(Player owner) {
-			// The on-screen position of inventory slot (col,row) converted into world space. Vanilla: 20 + col*56, 20 + row*56 at UI scale, scaled by 0.85.
-			int col = Slot % 10, row = Slot / 10;
+		/// <summary>The world position under inventory slot (col,row) on the local screen. Vanilla: 20 + col*56, 20 + row*56 at 0.85 scale.</summary>
+		public static Vector2 SlotWorldPosition(int slot) {
+			int col = slot % 10, row = slot / 10;
 			Vector2 ui = new Vector2(20f + col * 56f * 0.85f + 24f, 20f + row * 56f * 0.85f + 24f);
 			Vector2 screen = ui * Main.UIScale;
 			Vector2 half = new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f;
 			return (screen - half) / Main.GameViewMatrix.Zoom + half + Main.screenPosition;
 		}
+
+		/// <summary>Draws an inventory slot background with the item currently in that slot. A picture, not the item.</summary>
+		public static void DrawSlot(Projectile projectile, int slot, float rotation) {
+			Texture2D back = TextureAssets.InventoryBack.Value;
+			Main.EntitySpriteDraw(back, projectile.Center - Main.screenPosition, null, Color.White, rotation, back.Size() * 0.5f, 0.6f, SpriteEffects.None, 0);
+			Player owner = Main.player[projectile.owner];
+			if (slot < 0 || slot >= owner.inventory.Length || owner.inventory[slot].IsAir)
+				return;
+			Main.instance.LoadItem(owner.inventory[slot].type);
+			Texture2D icon = TextureAssets.Item[owner.inventory[slot].type].Value;
+			Rectangle frame = Main.itemAnimations[owner.inventory[slot].type] != null ? Main.itemAnimations[owner.inventory[slot].type].GetFrame(icon) : icon.Frame();
+			float scale = 0.6f * System.Math.Min(1f, 40f / System.Math.Max(frame.Width, frame.Height));
+			Main.EntitySpriteDraw(icon, projectile.Center - Main.screenPosition, frame, Color.White, rotation, frame.Size() * 0.5f, scale, SpriteEffects.None, 0);
+		}
+
+		private Vector2 HomeWorldPosition(Player owner) => SlotWorldPosition(Slot);
 
 		public override void AI() {
 			Player owner = Main.player[Projectile.owner];
@@ -691,11 +930,8 @@ namespace BagofChaos.Content.Projectiles
 			}
 			if (owner.HasBuff<SlotterBuff>())
 				Projectile.timeLeft = 2;
-			// Closing the inventory recalls everything.
-			if (Projectile.owner == Main.myPlayer && !Main.playerInventory) {
-				Projectile.Kill();
-				return;
-			}
+			if (Projectile.owner != Main.myPlayer)
+				return; // home is a spot on the owner's screen; everyone else just follows the sync
 			Vector2 home = HomeWorldPosition(owner);
 			if (Projectile.ai[1] > 0f) {
 				Projectile.ai[1]--;
@@ -714,20 +950,17 @@ namespace BagofChaos.Content.Projectiles
 				Projectile.Center = Vector2.Lerp(Projectile.Center, home, 0.3f);
 				Projectile.velocity = Vector2.Zero;
 				Projectile.friendly = false;
-				if (Main.rand.NextBool(120))
+				if (Main.rand.NextBool(120)) {
 					Projectile.ai[1] = 60f;
+					Projectile.netUpdate = true;
+				}
 			}
+			if (Main.GameUpdateCount % 20 == 0)
+				Projectile.netUpdate = true;
 		}
 
 		public override bool PreDraw(ref Color lightColor) {
-			Texture2D back = TextureAssets.InventoryBack.Value;
-			Main.EntitySpriteDraw(back, Projectile.Center - Main.screenPosition, null, Color.White, 0f, back.Size() * 0.5f, 0.6f, SpriteEffects.None, 0);
-			Player owner = Main.player[Projectile.owner];
-			if (Slot >= 0 && Slot < owner.inventory.Length && !owner.inventory[Slot].IsAir) {
-				Main.instance.LoadItem(owner.inventory[Slot].type);
-				Texture2D icon = TextureAssets.Item[owner.inventory[Slot].type].Value;
-				Main.EntitySpriteDraw(icon, Projectile.Center - Main.screenPosition, null, Color.White, 0f, icon.Size() * 0.5f, 0.6f, SpriteEffects.None, 0);
-			}
+			DrawSlot(Projectile, Slot, 0f);
 			return false;
 		}
 	}

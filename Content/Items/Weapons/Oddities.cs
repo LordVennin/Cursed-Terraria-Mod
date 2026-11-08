@@ -131,7 +131,7 @@ namespace BagofChaos.Content.Items.Weapons
 		}
 	}
 
-	// Four longer paddles, twice the ball speed, ten balls. Green, because upgrades are green.
+	// Four longer paddles (two on top, two on the bottom), twice the ball speed, ten balls. Green, because upgrades are green.
 	public class GreenPongPower : PongPower
 	{
 		protected override bool Green => true;

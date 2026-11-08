@@ -25,6 +25,7 @@ namespace BagofChaos.Content.Tiles
 		};
 
 		public override string Texture => "Terraria/Images/Tiles_" + TileID.CrystalBall;
+		public override string HighlightTexture => "Terraria/Images/Misc/TileOutlines/Tiles_" + TileID.CrystalBall;
 
 		public override void SetStaticDefaults() {
 			Main.tileFrameImportant[Type] = true;

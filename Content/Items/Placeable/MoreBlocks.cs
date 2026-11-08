@@ -5,7 +5,7 @@ using Terraria.ModLoader;
 
 namespace BagofChaos.Content.Items.Placeable
 {
-	// Hollow Block: solid for everything except players.
+	// Hollow Block: solid for everything except players. Places in mid-air.
 	public class HollowBlock : ModItem
 	{
 		public override void SetStaticDefaults() {
@@ -20,7 +20,7 @@ namespace BagofChaos.Content.Items.Placeable
 		}
 
 		public override void AddRecipes() {
-			CreateRecipe(500).AddIngredient(ItemID.AncientCloth).AddIngredient(ItemID.Glass, 50).AddTile(TileID.MythrilAnvil).Register();
+			CreateRecipe(500).AddIngredient(ItemID.AncientCloth).AddTile(TileID.MythrilAnvil).Register(); // 1 Forbidden Fragment
 		}
 	}
 
